@@ -1,0 +1,9 @@
+__pycache__/
+secretInfo.py
+productLog.txt
+failureLog.txt
+cat import.csv
+invoices/
+logs/
+test/
+images/
