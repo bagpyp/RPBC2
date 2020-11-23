@@ -23,11 +23,7 @@ from pprint import pprint
 
 #%% ORDERS
 
-# to test, run line ->
-# pd.read_pickle('orders.pkl').drop(list(range(5,10))).to_pickle('orders.pkl')
-new_orders = tools.newOrders()
-if len(new_orders) > 0:
-    tools.writeInvoice(new_orders)
+tools.document(tools.newOrders())
 
 #%% ECM
 if test:

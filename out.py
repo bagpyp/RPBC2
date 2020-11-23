@@ -20,7 +20,7 @@ import xml.etree.ElementTree as ET
 def fromECM(run=True,ecm=True,drive='E',stid = stid):    
     if ecm:
         # procout
-        os.system(f'{drive}: && cd ECM && ecmproc -out -a -stid:{stid}')
+        os.system(fr'cd \ && {drive}: && cd ECM && ecmproc -out -a -stid:{stid}')
     # parse invtentory cml files and build a list of 'items'
     if run:
         invns = []

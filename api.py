@@ -8,10 +8,9 @@ Created on Mon Oct  5 10:14:03 2020
 import datetime as dt
 import pandas as pd
 import requests
-from secretInfo import headers,base
+from secretInfo import headers,base,daysAgo
 import time
 import tqdm
-daysAgo = 1
 
 
 # fucking rate limits

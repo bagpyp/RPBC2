@@ -1,268 +1,278 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Oct  5 10:02:30 2020
 
-@author: Bagpyp
-"""
-
-import datetime as dt
-from functools import reduce
-from numpy import nan
-import os
-import pandas as pd
 import requests
 from secretInfo import headers,base,stid
+import json
+import xml.etree.ElementTree as ET
+import xml.dom.minidom as md
+import os
+import pandas as pd
 import time
+# from secretInfo import drive
 
-def getOrders(status_id=10,i=1):
+
+ihaveapickle = True
+
+def getOrders(status_id=10, i=1):
     url = base + f'v2/orders?status_id={status_id}'\
         + f'&limit=50&page={i}'
     res = requests.get(url, headers = headers)
-    if res.text:
-        orders = res.json()       
-        products = []
-        shipping_addresses = [] 
-        coupons = []
-        for order in orders:
-            res = requests.get(order['products']['url'],\
-                                         headers = headers)
-            if res.text:
-                products.extend(res.json())
-            res = requests.get(order['shipping_addresses']['url'],\
-                                         headers = headers)
-            if res.text:
-                shipping_addresses.extend(res.json())
-            res = requests.get(order['coupons']['url'],\
-                                         headers = headers)
-            if res.text:
-                coupons.extend(res.json())
-        o = pd.json_normalize(orders)
-        if any(o):
-            o['order_id']=o.id    
-            p = pd.json_normalize(products)
-            c = pd.json_normalize(coupons)
-            a = pd.json_normalize(shipping_addresses)
-            if not any(c):
-                c[['id','order_id','code','coupon_id','discount']]=nan
-            df = reduce(lambda x,y: pd.merge(x,y,\
-                                             how='outer',\
-                                             on='order_id',\
-                                             copy=False),\
-                        [x.drop('id',axis=1) for x in [o,p,c,a]])
-            df = df[['order_id',
-                      'date_created',
-                      'date_modified',
-                      'status_id',
-                      'status',
-                      'subtotal_inc_tax',
-                      'total_inc_tax_x',
-                      'items_total_x',
-                      'payment_method',
-                      'payment_provider_id',
-                      'payment_status',
-                      'refunded_amount',
-                      'product_id',
-                      'variant_id',
-                      'order_address_id',
-                      'name',
-                      'sku',
-                      'upc',
-                      'base_price',
-                      'price_inc_tax',
-                      'base_total',
-                      'quantity',
-                      'base_cost_price',
-                      'cost_price_inc_tax',
-                      'is_refunded',
-                      'quantity_refunded',
-                      'refund_amount',
-                      'coupon_id',
-                      'code',
-                      'discount',
-                      'first_name',
-                      'last_name',
-                      'street_1',
-                      'street_2',
-                      'city',
-                      'zip',
-                      'country',
-                      'state',
-                      'email',
-                      'phone',
-                      'base_cost']]
-            return df
-def countOrders(status_id=10):
-    url = base + 'v2/orders/count'
-    res = requests.get(url,headers = headers)
-    oc = res.json()['statuses']
-    return oc[['id' in x and x['id']==status_id for x in oc]\
-       .index(True)]['count']
-def allOrders(pickled_orders,status_id=10):
-    ordersUp = countOrders(status_id)
-    num_pickled_orders = len(pickled_orders.order_id.unique())
-    if ordersUp > num_pickled_orders:
-        print('orders found on BigCommerce, pulling...')
-        dfs = []
-        for n in range((countOrders(status_id)//50)+1):
-            dfs.append(getOrders(i=n+1))
-        return pd.concat(dfs,ignore_index=True)
-    else:
-        return pickled_orders
-# RERUN IF PKL LOST
-# orders = allOrders(10)
-# orders.to_pickle('orders.pkl')
-def newOrders():
-    pickled_orders = pd.read_pickle('orders.pkl')
-    orders = allOrders(pickled_orders)
-    orders.to_pickle('orders.pkl')
-    if len(orders) > len(pickled_orders):
-        return orders[~orders.order_id.isin(pickled_orders.order_id)]
-    else:
-        print('no new orders found, make sure status is changed to',
-              '`Completed` in BigCommerce Admin Panel')
-        return pd.DataFrame(columns=pickled_orders.columns.tolist())
-        
- 
-# ecm in
+    return res
 
-def writeInvoice(df, ecm=True, drive='E', stid = stid):
-    archive = pd.read_pickle('orders.pkl')
+def allOrders(status_id=10):
+    n = 1
+    orders = []
+    while getOrders(status_id, i=n).text:
+        nthOrders = json.loads(getOrders(status_id, i=n).content)
+        orders.extend(nthOrders)
+        n += 1
+    return orders
+
+
+def newOrders(test=False):
+    # returns json orders object or [] if no new orders
+
+    odf = pd.json_normalize(allOrders())
+    odf.external_source = odf.external_source.fillna('').replace('','bigcommerce')
+    if ihaveapickle:    
+        pickled_odf = pd.read_pickle('orders.pkl')
+        new_odf = odf[~odf.id.isin(pickled_odf.id)]
+    else:
+        odf.to_pickle('orders.pkl')
+        new_odf = odf
     
-    ecmDf = pd.read_pickle('fromECM.pkl')
-    df['ecmSKU'] = df.sku.str[2:].str.lstrip('0')
-    df.discount = df.discount.fillna(0)
-    df = pd.merge(df,ecmDf,left_on='ecmSKU',right_on='sku',\
-                  suffixes=('_bc','_rp')).set_index('order_id')
-    
-    beginning = dt.datetime.now()
-    now = str(beginning).replace(" ","T").split('.')[0]
-    def item(oid,j,invc_sid):
-        row = df.loc[[oid]].iloc[j]
-        s = f"""\t\t\t\t<INVC_ITEM invc_sid="{invc_sid}"
-                        item_pos="{j+1}" 
-                        item_sid="{row.isid}" 
-                        qty="{row.quantity}" 
-                        orig_price="{row.pSale}" 
-                        orig_tax_amt="0" 
-                        price="{round(float(row.subtotal_inc_tax)-float(row.discount),2)}" 
-                        cost="{row.cost_price_inc_tax}" 
-                        price_lvl="1" 
-                        empl_sbs_no="1" 
-                        empl_name="Robbie">
-                        <INVN_BASE_ITEM item_sid="{row.isid}" 
-                            flag="0" 
-                            ext_flag="0" />
-                    </INVC_ITEM>
-    """
-        return s
-    
-    def invoice(oid, num):
-        row = df.loc[[oid]].iloc[0]
-        invc_sid = int(str(101000)+str(id(dt.datetime.now())))
-        time.sleep(1)
-        cust_sid = int(str(101000)+str(id(dt.datetime.now())))
-        s =f"""\t\t<INVOICE invc_sid="{invc_sid}"
-                sbs_no="1" 
-                store_no="1" 
-                invc_no="{12000+len(archive)+num}"
-                invc_type="0" 
-                status="2" 
-                proc_status="3" 
-                cust_sid="5274779657848317680"  
-                rounding_offset="0" 
-                created_date="{now}" 
-                modified_date="{now}" 
-                post_date="{now}" 
-                tracking_no="" 
-                cms_post_date="{now}" 
-                ws_seq_no="29866" 
-                held="0" 
-                controller="0" 
-                orig_controller="0" 
-                empl_sbs_no="1" 
-                empl_name="Robbie" 
-                createdby_sbs_no="1" 
-                createdby_empl_name="Robbie">
-                <CUSTOMER cust_sid="5274779657848317680" 
-                    cust_id="38342" 
-                    store_no="0" 
-                    modified_date="{now}" 
-                    sbs_no="1" 
-                    cms="3" />
-                <SHIPTO_CUSTOMER cust_sid="{cust_sid}"
-                    cust_id="{str(200000+len(archive)+num)}"
-                    store_no="1"
-                    first_name="{row.first_name}"
-                    last_name="{row.last_name}"
-                    price_lvl=""
-                    modified_date="{now}"
-                    sbs_no="1"
-                    cms="0"
-                    company_name=""
-                    title=""
-                    tax_area_name=""
-                    shipping="1"
-                    address1="{row.street_1}"
-                    address2="{row.street_2}"
-                    address3="{row.city + ', ' + row.state}"
-                    email_addr="{row.email}"
-                    zip="{row.zip}"
-                    phone1="{row.phone}"
-                    phone2=""
-                    country_name="{row.country}"
-                    alternate_id1=""
-                    alternate_id2="" />
-                <INVC_SUPPLS>
-                    <INVC_SUPPL udf_no="1" 
-                        udf_value="Walkby"/>
-                </INVC_SUPPLS>
-                <INVC_COMMENTS>
-                    <INVC_COMMENT comment_no="1" 
-                        comments="{'BC ' + str(row.name)}"/>
-                    <INVC_COMMENT comment_no="2"
-                        comments="{row.payment_provider_id}"/>
-                </INVC_COMMENTS>
-                <INVC_FEES>
-                    <INVC_FEE fee_name="" 
-                        fee_type="9"
-                        amt="{row.base_cost}"/>
-                </INVC_FEES>
-                <INVC_TENDERS>
-                    <INVC_TENDER tender_type="4" 
-                        tender_no="1" 
-                        given="0" 
-                        amt="{row.total_inc_tax_x}"/>
-                </INVC_TENDERS>
-                <INVC_ITEMS>
-    """
-        for j in range(len(df.loc[[oid]])):
-            s += item(oid,j,invc_sid)
-        s += """\t\t\t</INVC_ITEMS>
-            </INVOICE>
-    """
-        return s
-            
-    def document(df):
-        s = """<?xml version="1.0" encoding="UTF-8"?>
-    <DOCUMENT>
-        <INVOICES>
-    """
-        for num, oid in enumerate(df.index.unique().tolist()):
-            s += invoice(oid, num)
-            time.sleep(1) # to reset id(())
-        s += """\t</INVOICES>
-    </DOCUMENT>
-    """
-        # s.replace
-        return s.replace('nan','')
-    
-    print('writing XML for new orders...')
-    # path = f"test/Invoice {str(dt.datetime.now().date())+str(dt.datetime.now().time())[:5].replace(':','_')}.xml"
-    path = rf'{drive}:\ECM\Polling\{stid}\IN\RECVD\Invoice.xml'
-    with open(path, 'w') as file: 
-        file.write(document(df))
-        
-    if ecm:
-        print('receipts building in Retail Pro')
-        os.system(f'{drive}: && cd ECM && ecmproc -a -in -stid:{stid}')
-    
+    if len(new_odf) > 0:
+
+        if not test:
+            odf.to_pickle('orders.pkl')
+
+        cols = [
+            'id',
+            'total_inc_tax',
+            'items_total',
+            'payment_method',
+            'payment_provider_id',
+            'external_source',
+            'external_id',
+            'products.url',
+        ]
+        df = new_odf[cols].astype(
+            {
+                'id':int,
+                'total_inc_tax':float,
+                'items_total':int,
+                'payment_provider_id':str,
+            }
+        )
+        orders = df.to_dict('records')
+
+        product_keys = [
+            'order_id',
+            'name',
+            'sku',
+            'quantity',
+            'price_inc_tax',
+            'total_inc_tax',
+        ]
+
+        full_orders = []
+        for order in orders:
+            # append products to order via url
+            products = requests.get(
+                    order.pop('products.url'),
+                    headers = headers,
+                ).json()
+            products = [
+                {
+                    k:v for k,v in product.items() if k in product_keys
+                }
+                for product in products
+            ]
+            for product in products:
+                for field in ['price_inc_tax','total_inc_tax']:
+                    product[field] = float(product[field]) 
+            order.update({'products':products})
+            full_orders.append(order)
+        return full_orders
+    else:
+        return []
+
+
+ecmdf = pd.read_pickle('fromECM.pkl')
+
+
+
+def sid():
+    sid = str(int(hash(str(time.time()))%1e13))
+    time.sleep(1)
+    return sid
+
+source_map = {
+    'ebay':'EBAY',
+    'bigcommerce':'BIGCOMME'
+}
+
+prefix_map = {
+    'ebay':'EBAY',
+    'bigcommerce':'BC',
+    '_':'SLS',
+    '__':'', # Amazon
+    '___':'WSH',
+    '____':'RK',
+    '_____':'WAL',
+    '______':'FB',
+    '_______':'QUIV',
+    '________':'STRON',
+}
+
+payment_map = {
+    'Authorize.net':'AUTHORIZE.NET',
+    'PayPal':'PAYPAL',
+    'Authorize.Net (Google Pay)':'GOOGLE PAY',
+    'Amazon Pay':'AMAZON PAY',
+    'ebay':'PAYPAL',
+    '_':'APPLE PAY',
+    '__':'CHASE PAY',
+}
+
+
+def invoice_attrib(order):
+    now = time.strftime('%Y-%m-%dT%H:%M:%S')
+    invoice_attrib = {
+        'invc_sid':sid(),
+        'created_date':now,
+        'modified_date':now+'-08:00',
+        'clerk_name':source_map[order['external_source']],
+        'controller':'1',
+        'orig_controller':'1',
+        'invc_type':'0',
+        'status':'2',
+        'store_no':'1',
+        'sbs_no':'1',
+    }
+    return invoice_attrib
+
+def tender_attrib(order):
+    tender_attrib = {
+        'tender_type':'0', # 4 for charges to sideline/amazon etc.
+        'tender_no':'1',
+        'taken':str(order['total_inc_tax']),
+        'amt':str(order['total_inc_tax']),
+        'orig_currency_name':payment_map[order['payment_method']],
+        'currency_name':payment_map[order['payment_method']],
+    }
+    return tender_attrib
+
+def comments(order):
+    comments = ['','']
+    source = order['external_source']
+    if source!='bigcommerce':
+        comments[0] = (prefix_map[source] + ' ' + order['external_id']).strip()
+        comments[1] = 'external'
+    else:
+        comments[0] = f'BC {order["id"]}'
+        comments[1] = str(order['payment_provider_id'])
+    return comments
+
+def items(order):
+    items = []
+    for i,product in enumerate(order['products']):
+        sku = product['sku'].split('-')[1].lstrip('0')
+        record = ecmdf.fillna('').astype(str)[ecmdf.sku==sku].iloc[0].to_dict()
+        item = {
+            'item_pos':str(i+1),
+            'item_sid':str(record['isid']),
+            'qty':str(product['quantity']),
+            'orig_price':str(record['pSale']),
+            'price':str(product['price_inc_tax']),
+        }
+        items.append(item)
+    return items
+
+def base_items(order):
+    base_items = []
+    for product in order['products']:
+        sku = product['sku'].split('-')[1].lstrip('0')
+        record = ecmdf.fillna('').astype(str)[ecmdf.sku==sku].iloc[0].to_dict()
+        base_item = {
+            'item_sid':str(record['isid']),
+            'upc':str(record['UPC']),
+            'alu':str(record['sku']),
+            'style_sid':str(record['ssid']),
+            'dcs_code':record['DCS'],
+            'vend_code':record['VC'],
+            'description1':record['name'],
+            'description2':record['year'],
+            'description3':record['alt_color'],
+            'description4':record['mpn'],
+            'attr':record['color'],
+            'siz':record['size'],
+        }
+        base_items.append(base_item)
+    return base_items
+
+class Invoice:
+    def __init__(self, order, no):
+        c = comments(order)
+        self.invoice_attrib = invoice_attrib(order)
+        self.invoice_attrib.update({'invc_no':f'{no}'})
+        self.comments = comments(order)
+        self.tender_attrib = tender_attrib(order)
+        self.comments = [
+                {
+                    'comment_no':'1',
+                    'comments':f'{c[0]}'
+                },
+                {
+                    'comment_no':'2',
+                    'comments':f'{c[1]}'
+                }
+            ]
+        self.invc_items = [
+            {
+                'invc_item':i, 
+                'invc_base_item':b
+            } for i,b in zip(*(items(order), base_items(order)))]
+
+    def to_xml(self):
+        invoice = ET.Element('INVOICE',self.invoice_attrib)
+        ET.SubElement(invoice,'CUSTOMER')
+        ET.SubElement(invoice,'SHIPTO_CUSTOMER')
+        ET.SubElement(invoice,'INVC_SUPPLS')
+        invc_comments = ET.SubElement(invoice,'INVC_COMMENTS')
+        ET.SubElement(invc_comments,'INVC_COMMENT',self.comments[0])
+        ET.SubElement(invc_comments,'INVC_COMMENT',self.comments[1])
+        ET.SubElement(invoice,'INVC_EXTRAS')
+        ET.SubElement(invoice,'INVC_FEES')
+        invc_tenders = ET.SubElement(invoice, 'INVC_TENDERS')
+        ET.SubElement(invc_tenders,'INVC_TENDER',self.tender_attrib)
+        invoice_items = ET.SubElement(invoice,'INVC_ITEMS')
+        for item in self.invc_items:
+            invc_item = ET.SubElement(invoice_items, 'INVC_ITEM', item['invc_item'])
+            ET.SubElement(invc_item, 'INVC_BASE_ITEM', item['invc_base_item'])
+        rough_xml = ET.tostring(invoice, 'unicode')
+        dom = md.parseString(rough_xml)
+        return dom.toprettyxml()
+
+def document(orders, ecm=True, drive='E', stid=f'{stid}'):
+    if orders == []:
+        print('no new orders found on bigcommerce, make sure completed orders are marked `Completed` in orders page of admin panel')
+    else:
+        n = len(pd.read_pickle('orders.pkl'))
+        header = f'<?xml version="1.0" encoding="UTF-8"?>\n<!-- Created on {time.strftime("%Y-%m-%dT%H:%M:%S")}-08:00 -->\n<!-- V9 STATION -->\n<DOCUMENT>\n<INVOICES>'
+        footer = '</INVOICES>\n</DOCUMENT>'
+        invoices = [Invoice(order,(i+1)+(n+1)+13000).to_xml() for i,order in enumerate(orders)]
+        if ecm:
+            path = rf'{drive}:\ECM\Polling\{stid}\IN\RECVD\Invoice.xml'
+            with open(path, 'w') as file: 
+                file.write(header + ''.join([s.replace('<?xml version="1.0" ?>','') for s in invoices]) + footer)
+                print('receipts building in Retail Pro')
+                os.system(fr'cd \ && {drive}: && cd ECM && ecmproc -a -in -stid:{stid}')
+        else:
+            with open('Invoice.xml', 'w') as file:
+                file.write(header + ''.join([s.replace('<?xml version="1.0" ?>','') for s in invoices]) + footer)
+
+
+
+
+
+#%%
