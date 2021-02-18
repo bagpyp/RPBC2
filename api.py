@@ -170,12 +170,17 @@ def updatedProducts():
            (dt.datetime.now()\
            -dt.timedelta(days = daysAgo))\
                .strftime('%Y-%m-%dT%H:%M:%S-07:00'))
+        # this is where products are getting duplicated, in all but v_id
         if len(new_p)>0:
             p = p.set_index('v_id')
             new_p = new_p.set_index('v_id')
             p.update(new_p)
             p = pd.concat([p,new_p[~new_p.index.isin(p.index)]])
-            p.reset_index().to_pickle('products.pkl')
+            p = p.reset_index()
+            # this is where we should remove all items with duplicated v_skus
+            p = p[p.v_id.isin(p.groupby('v_sku', sort = False).v_id.max())]
+            # keeping only those whose v_id is... LARGEST
+            p.to_pickle('products.pkl')
             return p
     else:
         new_p = products_since('1970-01-01')
@@ -185,6 +190,7 @@ def updatedProducts():
         else:
             return new_p
     
+
 # delete product by ID
 def deleteProduct(id_):
     h = headers.copy()
@@ -201,7 +207,7 @@ def createProduct(data):
     return res
 
 #update product via payload, `data`
-def updateProduct(id_,data):
+def updateProduct(id_,data, slow=False):
     responses = []
     url = base + f'v3/catalog/products/{id_}'
     h = headers.copy()
@@ -217,6 +223,10 @@ def updateProduct(id_,data):
         for v in variants:
             vUrl = url + f"/variants/{v.pop('id')}"
             res = requests.put(vUrl, headers=h, json=v)
+            if slow:
+                time.sleep(1)
+            else:
+                time.sleep(.1)
             responses.append(res)
         return responses
 
@@ -258,3 +268,42 @@ def categoryIDs():
             for k in j['children']:
                 cat.update({k['id']:i['name']+'/'+j['name']+'/'+k['name']})
     return cat
+
+
+
+def createMetafield(
+        product_id,
+        key,
+        value,   
+        description = 'a metafield',
+        namespace = 'general',
+        permission_set = 'read'
+    ):
+    # permission_set in [read, write, app_only,
+    # read_and_sf_access, write_and_sf_access]
+    url = base + f'v3/catalog/products/{product_id}/metafields'
+    data = {
+            'key':key,
+            'value':value,
+            'description':description,
+            'namespace':namespace,
+            'permission_set':permission_set
+        }
+    h = headers.copy()
+    h.update({'content-type':'application/json'})
+    res = requests.post(url, headers = h, json = data)
+    return res
+
+
+def createCustomField(product_id, key, value):
+    url = base + f'v3/catalog/products/{product_id}/custom-fields'
+    data = {
+            'name':key,
+            'value':value,
+        }
+    h = headers.copy()
+    h.update({'content-type':'application/json'})
+    res = requests.post(url, headers = h, json = data)
+    return res
+
+

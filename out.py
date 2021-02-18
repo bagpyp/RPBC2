@@ -5,11 +5,12 @@ Created on Mon Oct  5 10:07:33 2020
 @author: Bagpyp
 """
 
+
 from glob import glob
 from numpy import nan
 import os
 import pandas as pd
-from secretInfo import stid
+from secretInfo import stid, drive
 import time
 import tqdm
 
@@ -17,10 +18,10 @@ import xml.etree.ElementTree as ET
 
 # ecm out
 
-def fromECM(run=True,ecm=True,drive='E',stid = stid):    
+def fromECM(run=True, ecm=True, drive=drive, stid=stid):    
     if ecm:
         # procout
-        os.system(fr'cd \ && {drive}: && cd ECM && ecmproc -out -a -stid:{stid}')
+        os.system(f"{drive}:\\ECM\\ecmproc -out -a -stid:{stid}")
     # parse invtentory cml files and build a list of 'items'
     if run:
         invns = []
@@ -39,10 +40,15 @@ def fromECM(run=True,ecm=True,drive='E',stid = stid):
                 for j in i:
                     inventory.update(j.attrib)
                     # price, qty and udf uniquesness of keys
+                    saw_store = False
                     for n,k in enumerate(j):
                         for x,y in k.attrib.items():
+                            if x == 'store_no' and y == '1':
+                                saw_store = True
                             if x not in ['udf_no','price_lvl','store_no']:
                                 inventory.update({x+f'_{n+1}':y})
+                        if not saw_store:
+                            inventory.update({'qty_2':'0'})
             # only actuve product
             if inventory['active'] == '1':
                 inventorys.append(inventory)

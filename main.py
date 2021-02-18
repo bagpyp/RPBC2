@@ -5,31 +5,99 @@ Created on Mon Oct  5 10:29:51 2020
 @author: Bagpyp
 """
 
+
+# controls
+
+clearanceIsOn = False
 test = False
+excluded_vendor_codes = ['NIKE']
+excluded_dcs_codes = []
 
 import datetime as dt
 import json
 a = dt.datetime.now()
-from time import sleep
+print('began ',a.ctime())
+from time import sleep, gmtime
 import tools
+from maps import to_clearance_map
 from tqdm import tqdm
+from numpy import where
 import pandas as pd
 pd.options.mode.chained_assignment=None
 pd.options.display.max_rows = 150
-pd.options.display.max_columns = 50
+pd.options.display.max_columns = 75
 pd.options.display.width = 180
 pd.options.display.max_colwidth = 30
 from pprint import pprint
+from picklist import picklist
 
 #%% ORDERS
 
-tools.document(tools.newOrders())
+new_orders = tools.get_orders()
+
+
+# if it's between 8am and 9am, print a picklist!
+# if a.hour == 8:
+#
+#     ecmdf = pd.read_pickle('fromECM.pkl')
+#
+#     with open ('bc_orders.json') as bc:
+#         bc_orders = json.load(bc)
+#     with open('sls_orders.json') as sls:
+#         sls_orders = json.load(sls)
+#     o = sorted(bc_orders + sls_orders, key = lambda k: k['created_date'])
+    
+#     pick_statuses = [
+#             'Awaiting Payment',
+#             'Awaiting Fulfillment',
+#             'PENDING_SHIPMENT',
+#         ]
+    
+#     df = pd.json_normalize(o)
+#     df = df[df.status.isin(pick_statuses)]
+#     def f(x):
+#         for p in x['products']:
+#             p.update({'order_id':x['id']})
+#             if p['sku'].split('-')[1].lstrip('0'):
+#                 p['sku'] = p['sku'].split('-')[1].lstrip('0')
+#             else:
+#                 p['sku'] = '0'
+#         return x
+#     pick = pd.json_normalize(df.apply(lambda row: f(row), axis=1).products.sum())\
+#     .merge(df,left_on='order_id',right_on='id',how='left')\
+#         .drop('products',axis=1)\
+#     .merge(ecmdf[['CAT',
+#                   'BRAND',
+#                   'name',
+#                   'year',
+#                   'size',
+#                   'color',
+#                   'sku']],left_on='sku',right_on='sku')\
+#                             .drop(['amt_per',
+#                                     'id',
+#                                     'payment_id',
+#                                     'payment_zone',
+#                                     'amt_total'],axis=1)
+#     pick.to_excel('picklist.xlsx',index=False)
+    
+
+#%%
+tools.document(new_orders)
+# sleep(5)
 
 #%% ECM
+print('pulling data from ECM')
+
 if test:
     df = tools.fromECM(run=False,ecm=False)
 else:
     df = tools.fromECM()
+    
+#%%
+
+
+df = df[(~df.VC.isin(excluded_vendor_codes))\
+        &(~df.DCS.isin(excluded_dcs_codes))]
 
 # nuke duplicate SKUs
 df = df[~df.sku.duplicated(keep=False)]
@@ -64,8 +132,11 @@ clr = df[df.DCS.str.match(r'(REN|USD)') & df.qty>0]
 clr.DCS = clr.DCS.str.replace('REN','').str.replace('USD','')
 # map modified DCSs to above categories
 clr.CAT = clr.DCS.map(tools.clearance_map)
-# add clearance dataframe, clr to df
-df = pd.concat([df,clr]).sort_index()
+
+if clearanceIsOn:    
+    # add clearance dataframe, clr to df
+    df = pd.concat([df,clr]).sort_index()
+    
 # drop rental, service and used product (not clearance)
 df = df[~df.DCS.str.match(r'(SER|REN|USD)')]
 
@@ -73,17 +144,22 @@ df = df[~df.DCS.str.match(r'(SER|REN|USD)')]
 df.CAT = df.CAT.map(tools.category_map).fillna('Misc')
 
 # filters products without UPCs w/ length 11, 12 or 13.
-df = df[(df.UPC.str.len().isin([11,12,13]))|\
+if clearanceIsOn: 
+    df = df[(df.UPC.str.len().isin([11,12,13]))|\
         (df.CAT.isin(clr.CAT))]
+else:
+    df = df[df.UPC.str.len().isin([11,12,13])]
 
 # map null brands to Hillcrest
-df.BRAND = df.BRAND.replace('',tools.nan).fillna('Hillcrest').str.title()
+df.BRAND = df.BRAND.str.strip().str.replace('^$','Hillcrest', regex=True)
 
 df.sku = df.sku.astype(int)
 df = df.sort_values(by='sku')
 df.sku = df.sku.astype(str).str.zfill(5)
 df.set_index('sku', drop=True, inplace=True)
+df = df[df['name'].notna()]
 df['webName'] = (df.name.str.title() + ' ' + df.year.fillna('')).str.strip()
+
 
 # settling webNames with more than one ssid
 chart = df[['webName','ssid']].groupby('ssid')\
@@ -126,6 +202,7 @@ df= df[['webName',
 if test:
     pdf = pd.read_pickle('products.pkl')
 else:
+    print('pulling product data from BigCommerce')
     pdf = tools.updatedProducts().reset_index()
 
 #should have no effect after problem is fixed
@@ -157,7 +234,7 @@ df = pd.merge(df,pdf,how='left',left_on='sku',right_on='v_sku')\
 
 #reshape and archive images and descriptions
 
-print('configuring product options...')
+print('reshaping media...')
 sleep(1)
 df = tools.reshapeMedia(df)
 
@@ -173,6 +250,8 @@ df = pd.read_pickle('mediatedDf.pkl')
 nosync = df.groupby('webName').filter(lambda g: \
                         ((g.p_id.count() > 0)\
                         & (g[['p_id','v_id']].count().sum() < len(g))))
+    
+
 for id_ in nosync.p_id.dropna().unique().tolist():
     tools.deleteProduct(id_)
 
@@ -192,12 +271,15 @@ df.loc[nosync.sku.tolist(),['p_name',
 
 df.to_pickle('ready.pkl')
 
+
+#%% PULL ARCHIVE, BREAK IN TWO
+
+# df = pd.read_pickle('ready.pkl')
+
 if test:
     print('runtime: ',dt.datetime.now()-a)
     
 else:
-
-    #%% PULL ARCHIVE, BREAK IN TWO
     df = pd.read_pickle('ready.pkl')
     df.update(pd.read_pickle('media.pkl'))
     df = df.join(tools.fileDf())
@@ -218,6 +300,8 @@ else:
 
     b = tools.brandIDs()
     c = tools.categoryIDs()
+    
+    
 
     # awesome
     for brand in df[~df.BRAND.isin(list(b.values()))].BRAND.unique():
@@ -226,6 +310,31 @@ else:
     # not awseome yet, must create CAT
     df['cat'] = df.CAT.map({v:str(k) for k,v in c.items()})
 
+
+    year = gmtime().tm_year
+    month = gmtime().tm_mon
+    # only showing last 3 years - (3)
+    # winter product becomes old in May - (4)
+    # summer product becomes old in November - (11)
+    old = [f'{n-1}-{n}' for n in range(int(str((year+1)-3)[2:])+int(month>=5), \
+                                    int(str(year)[2:])+int(month>=5))] \
+        + [str(i) for i in range(int(str(year-3))+int(month>=5), \
+                                int(year) + int(month>=11))]
+    new = [f'{(int(str(year)[:2])-1) + int(month > 5)}' \
+            + f'-{(int(str(year)[:2])) + int(month > 5)}',
+            f'{year + int(month > 11)}']
+        
+    
+    df['is_old'] = df.webName.str.contains('|'.join(old))
+    df['clearance_cat'] = where(
+        df.webName.str.contains('|'.join(old)),
+        df.cat.map(to_clearance_map),
+        ''
+    )
+    
+    
+    df = df[df.brand!='']
+    
     gb = df.groupby('webName')
 
 
@@ -235,8 +344,10 @@ else:
                                              days = tools.daysAgo+1))
                 )\
             &(g.p_id.count()==1)).groupby('webName',sort=False)
+        
+    
      
-    #%% UPDATE
+    #%% UPDATABLES
 
 
     # UPDATE
@@ -244,7 +355,14 @@ else:
     print('building payloads for update...')
     sleep(1)
     for _,g in tqdm(old):
-        updatables.append(tools.upPayload(g))
+        try:
+            updatables.append(tools.upPayload(g))
+        except:
+            print('exception occured with \n')
+            print(g)
+            continue
+        
+    #%% UPDATE 
 
     updated = []
     updateFailed = []
@@ -254,26 +372,41 @@ else:
         print(f'updating {len(updatables)} products...')
         sleep(1)
         for i,u in tqdm(enumerate(updatables)):
+            # if i <= 3267: continue
             uid = u.pop('id')
             res = tools.updateProduct(uid,u)
             if all([r.ok for r in res]):
                 updated.append(res)
+            elif any([r.status_code==429 for r in res]):
+                sleep(30)
+                res = tools.updateProduct(uid,u, slow=True)
+                if all([r.ok for r in res]):
+                    updated.append(res)  
+        
             else:
-                tools.log(f"failure occured with productID {uid}")
+                tools.log(f"failed updatables[{i}], p_id={uid}\n{u}")
+                # tools.deleteProduct(uid)
                 updateFailed.append(res)
 
 
-    #%% CREATE
+    #%% CREATABLES
 
 
     creatables = []
     print('building payloads for creation...')
     sleep(1)
     for _,g in tqdm(new):
-        creatables.append(tools.newPayload(g))
+        try:
+            creatables.append(tools.newPayload(g))
+        except:
+            print(f'exception occured with {g.sku}\n')
+            # print(g)
+            continue
 
     created = []
     failed = []
+    
+    #%% CREATE
 
     if len(creatables)>0:
         
@@ -285,22 +418,49 @@ else:
         res = tools.createProduct(c)
         if res.ok:
             created.append(res)
+            # Add eBay product ID metafields w/ id & cat id
+            p_id = str(res.json()['data']['id'])
+            cat = str(res.json()['data']['categories'][0])
+            if cat in tools.to_ebay_map:
+                tools.createCustomField(
+                        p_id,
+                        'eBay Category ID',
+                        cat
+                    )
+            else:
+                tools.createCustomField(
+                        p_id,
+                        'eBay Category ID',
+                        "0"
+                    )
+            
             tools.log(f"created {c['name']}")
         else:        
-            tools.log(f"\t{c['name']} failed, trying again")
-            sleep(1)
-            res = tools.createProduct(c)
-            if not res.ok:
-                tools.log(f"\t{c['name']} failed twice!")
-                failed.append(res)
-            else:
-                tools.log(f"\t\tcreated {c['name']} on 2nd attempt!")
-                created.append(res)
+            
+            if json.loads(res.content)['title'] in ['The product name is a duplicate','Variant with the same option values set exists']:
+                continue
+            
+            
+            
+            
+            
+            # tools.log(f"\t{c['name']} failed, trying again")
+            # sleep(1)
+            # res = tools.createProduct(c)
+            # if not res.ok:
+            #     tools.log(f"\t{c['name']} failed twice!")
+            #     failed.append(res)
+            # else:
+            #     tools.log(f"\t\tcreated {c['name']} on 2nd attempt!")
+            #     created.append(res)
 
     with open('productLog.txt','w') as f:
         f.write('[')
         for c in created:
-            f.write(json.dumps(json.loads(c.content)))
+            try:
+                f.write(json.dumps(json.loads(c.content)))
+            except:
+                continue
             f.write(',')
         f.write(']')
         
@@ -308,10 +468,15 @@ else:
         for i,d in enumerate(failed):
             f.write('\n')
             f.write('-'*100+f'\n\n{i}\n\n')
-            pprint(json.loads(d.content),f)
+            try:
+                pprint(json.loads(d.content),f)
+            except:
+                continue
             f.write('\n\n')
             pprint(json.loads(d.request.body),f)
             f.write('\n\n')
         
-            
+    
     print('runtime: ',dt.datetime.now()-a)
+    
+    picklist()

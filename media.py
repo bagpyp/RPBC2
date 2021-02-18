@@ -120,7 +120,7 @@ def archiveMedia(df):
     variant = df[df.sku.str[:2]=='1-']\
     [['sku','v_image_url']]\
     .set_index('sku').dropna(how='all')
-    for name,url in variant.iterrows():
+    for name,url in tqdm.tqdm(variant.iterrows()):
         if name not in variants:
             download(url.values[0],'images/variant/'+name)
             

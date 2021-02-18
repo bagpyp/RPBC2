@@ -10,6 +10,8 @@ def searchWords(r):
         + r['BRAND']\
         + r['sku']
 
+
+
 def newPayload(g):
     product = {}
     g = g.fillna('').to_dict('records')
@@ -111,6 +113,10 @@ def upPayload(g):
                 'price':r['pMAP'],
                 'retail_price':r['pMSRP']
                 })
+    if r['clearance_cat'] != '':
+        product.update({
+            'categories':[int(r['cat']),int(r['clearance_cat'])]
+            })
     if r['image_0']!='':
         product.update({'is_visible':True})
     elif r['image_0']=='':
