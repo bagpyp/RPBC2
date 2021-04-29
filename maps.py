@@ -5,6 +5,32 @@ Created on Mon Oct  5 10:27:43 2020
 @author: Web
 """
 
+customer_data = {
+    'Authorize.Net':{'sid':'6006417736096747516','id':'1010176'},
+    'PayPal':{'sid':'791550355979724528','id':'28207'},
+    'SidelineSwap':{'sid':'5757614230247772156','id':'1008618'},
+	'GoogleShopping':{'sid':'6006479495503482876','id':'1010179'},
+    # default payment zone
+    'BigCommerce':{'sid':'5274779657848317680','id':'38342'},
+    'GooglePay':{'sid':'6043739532885954556','id':'1010761'},
+    'FacebookMarketplace':{'sid':'6421257710870138876','id':'1013049'},
+    'Ebay':{'sid':'-2005425994566899984','id':'23780'}
+}
+
+prefix_map = {
+    'EBAY':'EBAY',
+    'GOOGLE':'GOOGLE',
+    'SIDELINE':'SLS',
+    'BIGCOMMERCE':'BC',
+    '__':'', # Amazon
+    '___':'WSH',
+    '____':'RK',
+    '_____':'WAL',
+    'FACEBOOK':'FB',
+    '_______':'QUIV',
+    '________':'STRON',
+}
+
 category_map = {\
         'Disc Golf/Bag':'Misc',
         'Electronic/Audio':'Misc',
@@ -47,7 +73,7 @@ category_map = {\
         'Mens/Midlayer':'Outerwear/Midlayer/Men',
         'Mens/Outerwear/Gloves':'Outerwear/Gloves/Men',
         'Mens/Outerwear/Jackets':'Outerwear/Jacket/Men',
-        'Mens/Outerwear/Mittens':'Outerwear/Gloves/Women',
+        'Mens/Outerwear/Mittens':'Outerwear/Mittens/Men',
         'Mens/Outerwear/Pants':'Outerwear/Pants/Men',
         'Mens/Outerwear/Suit':'Outerwear/Suit',
         'Mens/Swimwear/Shorts':'Lifestyle/Men/Shorts',

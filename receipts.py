@@ -14,6 +14,7 @@ import os
 import datetime as dt
 import json
 import time
+from maps import customer_data, prefix_map
 
 
 order_counts = {}
@@ -21,57 +22,45 @@ for api_source in ['sls','bc']:
     with open(f'{api_source}_orders.json') as f:
         order_counts[api_source] = len(json.load(f))
 
+return_counts = {}
+for api_source in ['sls','bc']:
+    with open(f'{api_source}_returns.json') as f:
+        return_counts[api_source] = len(json.load(f))
+
 import pandas as pd
 ecmdf = pd.read_pickle('fromECM.pkl')
 
 #%%
-
-customer_data = {
-    'Authorize.Net':{'sid':'6006417736096747516','id':'1010176'},
-    'PayPal':{'sid':'791550355979724528','id':'28207'},
-    'SidelineSwap':{'sid':'5757614230247772156','id':'1008618'},
-	'GoogleShopping':{'sid':'6006479495503482876','id':'1010179'},
-    # default payment zone
-    'BigCommerce':{'sid':'5274779657848317680','id':'38342'},
-    'GooglePay':{'sid':'6043739532885954556','id':'1010761'}
-}
 
 def sid():
     sid = str(int(hash(str(time.time()))%1e13))
     time.sleep(.1)
     return sid
 
-def times(time):
+def times(time, regular = True):
     utc = dt.datetime.strptime(time,'%Y-%m-%dT%H:%M:%S')
-    now = utc - dt.timedelta(hours=8)
+    if regular:
+        now = utc - dt.timedelta(hours=8)
+    else:
+        now = utc
     a_second_ago = now - dt.timedelta(seconds=1)
     return {'utc':dt.datetime.strftime(utc,'%Y-%m-%dT%H:%M:%S'),
             'now':dt.datetime.strftime(now,'%Y-%m-%dT%H:%M:%S'),
             'a_second_ago':dt.datetime.strftime(a_second_ago,'%Y-%m-%dT%H:%M:%S')}
 
-prefix_map = {
-    'EBAY':'EBAY',
-    'GOOGLE':'GOOGLE',
-    'SIDELINE':'SLS',
-    'BIGCOMMERCE':'BC',
-    '_':'SLS',
-    '__':'', # Amazon
-    '___':'WSH',
-    '____':'RK',
-    '_____':'WAL',
-    '______':'FB',
-    '_______':'QUIV',
-    '________':'STRON',
-}
-
-def invoice_attrib(order, no):
-    t = times(order['created_date'])
+def invoice_attrib(order, no, invc_sid_top, regular=True):
+    diff = abs(min(0,round(order['total_amt'] - sum([p['amt_total'] for p in order['products']]),2)))
+    if regular:
+        t = times(order['created_date'])
+    else:
+        t = times(dt.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'), regular = False)
     invoice_attrib = dict(
-        invc_sid = sid(),
+        # invc_sid = sid(),
+        invc_sid = invc_sid_top,
         sbs_no = '1',
         invc_no = str(no),
         store_no = '1',
-        invc_type = '0',
+        invc_type = ('2','0')[regular],
         #TODO invc_no = 
         status = '0',
         proc_status = '0',
@@ -81,8 +70,8 @@ def invoice_attrib(order, no):
         orig_store_no = '1',
         use_vat = '0',
         vat_options = '0',
-        disc_perc = '0',
-        disc_amt = '0',
+        disc_perc = str(round(100*diff/order['total_amt'],0)),
+        disc_amt = str(diff),
         created_date = t['now'],
         modified_date = t['utc'],
         post_date = t['a_second_ago'],
@@ -154,6 +143,16 @@ def comments(order):
         comments[1] = str(order['payment_id'])
     return comments
 
+def fee_attrib(order):
+    diff = max(0,round(order['total_amt'] - sum([p['amt_total'] for p in order['products']]),2))
+    fee_attrib = dict(
+        fee_type = '9',
+        tax_perc="0",
+        tax_incl="0",
+        amt = str(diff),
+        fee_name="Shipng"
+    )
+    return fee_attrib
 
 
 
@@ -208,12 +207,15 @@ def base_items(order):
     return base_items
 
 class Invoice:
-    def __init__(self, order, no):
+    def __init__(self, order, no, regular=True):
         c = comments(order)
-        self.invoice_attrib = invoice_attrib(order, no)
+        self.invc_sid = sid()
+        self.invc_no = no
+        self.invoice_attrib = invoice_attrib(order, no, self.invc_sid, regular=regular)
         # self.invoice_attrib.update({'invc_no':f'{no}'})
         self.customer_attrib = customer_attrib(order)
         self.tender_attrib = tender_attrib(order)
+        self.fee_attrib = fee_attrib(order)
         self.comments = [
                 {
                     'comment_no':'1',
@@ -239,7 +241,8 @@ class Invoice:
         ET.SubElement(invc_comments,'INVC_COMMENT',self.comments[0])
         ET.SubElement(invc_comments,'INVC_COMMENT',self.comments[1])
         ET.SubElement(invoice,'INVC_EXTRAS')
-        ET.SubElement(invoice,'INVC_FEES')
+        fees = ET.SubElement(invoice,'INVC_FEES')
+        ET.SubElement(fees, 'INVC_FEE',self.fee_attrib)
         invc_tenders = ET.SubElement(invoice, 'INVC_TENDERS')
         ET.SubElement(invc_tenders,'INVC_TENDER',self.tender_attrib)
         invoice_items = ET.SubElement(invoice,'INVC_ITEMS')
@@ -250,28 +253,37 @@ class Invoice:
         dom = md.parseString(rough_xml)
         return dom.toprettyxml()
 
-def document(orders, ecm=True, drive=drive, stid=f'{stid}'):
+def document(orders, ecm=True, drive=drive, stid=f'{stid}', regular=True):
     if orders == []:
         print('no new orders found on bigcommerce, make sure completed orders are marked `Completed` in orders page of admin panel')
     else:
         header = f'<?xml version="1.0" encoding="UTF-8"?>\n<!-- Created on {time.strftime("%Y-%m-%dT%H:%M:%S")}-08:00 -->\n<!-- V9 STATION -->\n<DOCUMENT>\n<INVOICES>'
         footer = '</INVOICES>\n</DOCUMENT>'
-        invoices = [Invoice(order,sum(list(order_counts.values())) + i+1 + 13000).to_xml() for i,order in enumerate(orders)]
+        if regular:
+            invoices = [Invoice(order,sum(list(order_counts.values())) + i+1 + 13003) for i,order in enumerate(orders)]
+        else:
+            invoices = [Invoice(order,sum(list(return_counts.values())) + i+1 + 50000, regular=False) for i,order in enumerate(orders)]
+        invoice_xmls = [invoice.to_xml() for invoice in invoices]
         if ecm:
             path = rf'{drive}:\ECM\Polling\{stid}\PROC\IN\Invoice001.xml'
             # write invoice to invoices/
             with open(f'invoices/Invoice{sid()}.xml','w') as otherFile:
-                otherFile.write(header + ''.join([s.replace('<?xml version="1.0" ?>','') for s in invoices]) + footer)
+                otherFile.write(header + ''.join([s.replace('<?xml version="1.0" ?>','') for s in invoice_xmls]) + footer)
+            with open('invoices/written.csv','a') as logFile:
+                logFile.writelines([','.join([invoice.invc_sid,
+                                              str(invoice.invc_no),
+                                              invoice.comments[0]['comments'],
+                                              invoice.comments[1]['comments']])+'\n' for invoice in invoices])
             # write invoice to server and procin
             with open(path, 'w') as file: 
-                file.write(header + ''.join([s.replace('<?xml version="1.0" ?>','') for s in invoices]) + footer)
-            print('receipts building in Retail Pro')
+                file.write(header + ''.join([s.replace('<?xml version="1.0" ?>','') for s in invoice_xmls]) + footer)
+            print('receipts building in Retail Pro...')
             time.sleep(1)
             os.system(f'{drive}:\\ECM\\ecmproc -a -in -stid:{stid}')
 
         else:
             with open('Invoice001.xml', 'w') as file:
-                file.write(header + ''.join([s.replace('<?xml version="1.0" ?>','') for s in invoices]) + footer)
+                file.write(header + ''.join([s.replace('<?xml version="1.0" ?>','') for s in invoice_xmls]) + footer)
 
 
 

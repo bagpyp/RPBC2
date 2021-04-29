@@ -77,9 +77,14 @@ def fromECM(run=True, ecm=True, drive=drive, stid=stid):
             .dropna(thresh=2)
             
         # strip, sep with `/` and title() DCSes    
-        cats['cat'] = cats.fillna('').iloc[:,1:].apply(\
-                lambda x: '/'.join(x.str.strip().str.title()),axis=1\
-            ).str.strip('/')
+        # cats['cat'] = cats.fillna('').iloc[:,1:].apply(\
+        #         lambda x: '/'.join(x.str.strip().str.title()),axis=1\
+        #     ).str.strip('/')
+        cats = cats.fillna('')
+        cats['cat'] = (cats.d_name.str.strip().str.title() \
+            + '/' + cats.c_name.str.strip().str.title() \
+            + '/' + cats.s_name.str.strip().str.title()).str.strip('/')
+            
             
         # mergo on `dcs_code`
         df = df.merge(cats,on='dcs_code')

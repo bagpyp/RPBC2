@@ -117,6 +117,10 @@ def upPayload(g):
         product.update({
             'categories':[int(r['cat']),int(r['clearance_cat'])]
             })
+    else:
+        product.update({
+            'categories':[int(r['cat'])]
+        })
     if r['image_0']!='':
         product.update({'is_visible':True})
     elif r['image_0']=='':

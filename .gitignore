@@ -40,5 +40,10 @@ picklist.py
 picklist.txt
 receiptFix/
 receiptFlush.py
+accounting/
+forkathy.csv
+products.csv
+reports.py
+time_report.py
 temp/
 

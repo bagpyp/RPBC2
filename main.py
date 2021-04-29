@@ -10,7 +10,7 @@ Created on Mon Oct  5 10:29:51 2020
 
 clearanceIsOn = False
 test = False
-excluded_vendor_codes = ['NIKE']
+excluded_vendor_codes = []
 excluded_dcs_codes = []
 
 import datetime as dt
@@ -30,60 +30,31 @@ pd.options.display.width = 180
 pd.options.display.max_colwidth = 30
 from pprint import pprint
 from picklist import picklist
+from secretInfo import is_nighttime
+from account import pull_invoices, pull_orders
+
+
+
 
 #%% ORDERS
 
 new_orders = tools.get_orders()
+tools.document(new_orders)
 
+w = pd.read_csv('invoices/written.csv')
+new_returns = tools.get_returns()
+tools.document([ret for ret in new_returns \
+                if str(ret.get('id')) in \
+                w.comment1.apply(lambda x: x.split(' ')[1]).tolist()], \
+                   regular=False)
 
-# if it's between 8am and 9am, print a picklist!
-# if a.hour == 8:
-#
-#     ecmdf = pd.read_pickle('fromECM.pkl')
-#
-#     with open ('bc_orders.json') as bc:
-#         bc_orders = json.load(bc)
-#     with open('sls_orders.json') as sls:
-#         sls_orders = json.load(sls)
-#     o = sorted(bc_orders + sls_orders, key = lambda k: k['created_date'])
-    
-#     pick_statuses = [
-#             'Awaiting Payment',
-#             'Awaiting Fulfillment',
-#             'PENDING_SHIPMENT',
-#         ]
-    
-#     df = pd.json_normalize(o)
-#     df = df[df.status.isin(pick_statuses)]
-#     def f(x):
-#         for p in x['products']:
-#             p.update({'order_id':x['id']})
-#             if p['sku'].split('-')[1].lstrip('0'):
-#                 p['sku'] = p['sku'].split('-')[1].lstrip('0')
-#             else:
-#                 p['sku'] = '0'
-#         return x
-#     pick = pd.json_normalize(df.apply(lambda row: f(row), axis=1).products.sum())\
-#     .merge(df,left_on='order_id',right_on='id',how='left')\
-#         .drop('products',axis=1)\
-#     .merge(ecmdf[['CAT',
-#                   'BRAND',
-#                   'name',
-#                   'year',
-#                   'size',
-#                   'color',
-#                   'sku']],left_on='sku',right_on='sku')\
-#                             .drop(['amt_per',
-#                                     'id',
-#                                     'payment_id',
-#                                     'payment_zone',
-#                                     'amt_total'],axis=1)
-#     pick.to_excel('picklist.xlsx',index=False)
-    
 
 #%%
-tools.document(new_orders)
-# sleep(5)
+
+try: 
+    picklist(local=False)
+except Exception: 
+    pass
 
 #%% ECM
 print('pulling data from ECM')
@@ -92,6 +63,7 @@ if test:
     df = tools.fromECM(run=False,ecm=False)
 else:
     df = tools.fromECM()
+
     
 #%%
 
@@ -174,8 +146,10 @@ for i in range(1, len(chart)):
         j+=1
 df.webName = df.ssid.map(chart.webName.to_dict())
 
+
 # options
 df = tools.configureOptions(df)
+
 
 #%% JOIN AND MEDIATE
 
@@ -245,6 +219,9 @@ df = df[~df.sku.duplicated(keep=False)]
 
 tools.archiveMedia(df)
 
+
+
+
 #%% DELETE CONFLICT PRODUCTS
 df = pd.read_pickle('mediatedDf.pkl')
 nosync = df.groupby('webName').filter(lambda g: \
@@ -274,7 +251,7 @@ df.to_pickle('ready.pkl')
 
 #%% PULL ARCHIVE, BREAK IN TWO
 
-# df = pd.read_pickle('ready.pkl')
+df = pd.read_pickle('ready.pkl')
 
 if test:
     print('runtime: ',dt.datetime.now()-a)
@@ -306,7 +283,7 @@ else:
     # awesome
     for brand in df[~df.BRAND.isin(list(b.values()))].BRAND.unique():
         b.update({tools.createBrand(brand):brand})
-    df['brand'] = df.BRAND.map({v:str(k) for k,v in b.items()})
+    df['brand'] = df.BRAND.str.lower().map({v.lower():str(k) for k,v in b.items()})
     # not awseome yet, must create CAT
     df['cat'] = df.CAT.map({v:str(k) for k,v in c.items()})
 
@@ -345,10 +322,15 @@ else:
                 )\
             &(g.p_id.count()==1)).groupby('webName',sort=False)
         
+    try: 
+        picklist()
+    except Exception: 
+        pass
+
     
      
     #%% UPDATABLES
-
+    
 
     # UPDATE
     updatables = []
@@ -372,9 +354,13 @@ else:
         print(f'updating {len(updatables)} products...')
         sleep(1)
         for i,u in tqdm(enumerate(updatables)):
-            # if i <= 3267: continue
+            # if i <= 71: continue
             uid = u.pop('id')
-            res = tools.updateProduct(uid,u)
+            try:
+                res = tools.updateProduct(uid,u)
+            except Exception:
+                print(i,' connError')
+                continue
             if all([r.ok for r in res]):
                 updated.append(res)
             elif any([r.status_code==429 for r in res]):
@@ -389,12 +375,19 @@ else:
                 updateFailed.append(res)
 
 
+
     #%% CREATABLES
+    
+    try: 
+        picklist()
+    except Exception: 
+        pass
+
 
 
     creatables = []
     print('building payloads for creation...')
-    sleep(1)
+    # sleep(1)
     for _,g in tqdm(new):
         try:
             creatables.append(tools.newPayload(g))
@@ -408,7 +401,13 @@ else:
     
     #%% CREATE
 
+    """
+    BROTEN
+    """
+    
+
     if len(creatables)>0:
+    
         
         print('product creation iminent...')
         sleep(1)    
@@ -436,9 +435,52 @@ else:
             
             tools.log(f"created {c['name']}")
         else:        
-            
+            failed.append(res)
             if json.loads(res.content)['title'] in ['The product name is a duplicate','Variant with the same option values set exists']:
                 continue
+            elif (json.loads(res.content)['title'] == "The field 'image_url' is invalid.") and ('images' in c):
+                
+                # have to remove image from media.pkl
+                
+                
+                c.pop('images')
+                if 'variants' in c:
+                    for v in c['variants']:
+                        if 'image_url' in v:
+                            v.pop('image_url')
+                c['is_visible'] = False
+                res = tools.createProduct(c)
+                if res.ok:
+                    created.append(res)
+                    # Add eBay product ID metafields w/ id & cat id
+                    j = res.json()
+                    p_id = str(j['data']['id'])
+                    cat = str(j['data']['categories'][0])
+                    sale_price = str(j['data']['sale_price'])
+                    if cat in tools.to_ebay_map:
+                        tools.createCustomField(
+                                p_id,
+                                'eBay Category ID',
+                                cat
+                            )
+                        tools.createCustomField(
+                                p_id,
+                                'eBay Sale Price',
+                                str(sale_price)
+                            )
+                    else:
+                        tools.createCustomField(
+                                p_id,
+                                'eBay Category ID',
+                                "0"
+                            )
+                        tools.createCustomField(
+                                p_id,
+                                'eBay Sale Price',
+                                str(sale_price)
+                            )
+                    
+                    tools.log(f"created {c['name']}")
             
             
             
@@ -476,7 +518,17 @@ else:
             pprint(json.loads(d.request.body),f)
             f.write('\n\n')
         
-    
+
+
+    #%%
     print('runtime: ',dt.datetime.now()-a)
     
-    picklist()
+    try: 
+        picklist()
+    except Exception: 
+        pass
+
+    if is_nighttime:
+        pull_invoices()
+        pull_invoices(test=True,clocks=True)
+        pull_orders()

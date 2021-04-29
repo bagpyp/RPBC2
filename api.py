@@ -296,6 +296,16 @@ def createMetafield(
 
 
 def createCustomField(product_id, key, value):
+    """
+    for i,(n,g) in tqdm(enumerate(p.groupby('p_name'))):
+    if i > 11508:
+        try:
+            res = tools.createCustomField(g.p_id.fillna(0).astype(int).astype(str).iat[0],'eBay Sale Price',str(g.p_sale_price.iat[0]))
+            ress.append(res)
+        except Exception:
+            print(i, ' broke, name:', n)
+            continue
+    """
     url = base + f'v3/catalog/products/{product_id}/custom-fields'
     data = {
             'name':key,
