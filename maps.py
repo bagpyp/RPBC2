@@ -14,7 +14,8 @@ customer_data = {
     'BigCommerce':{'sid':'5274779657848317680','id':'38342'},
     'GooglePay':{'sid':'6043739532885954556','id':'1010761'},
     'FacebookMarketplace':{'sid':'6421257710870138876','id':'1013049'},
-    'Ebay':{'sid':'-2005425994566899984','id':'23780'}
+    'Ebay':{'sid':'-2005425994566899984','id':'23780'},
+    'Amazon':{'sid':'-2532916938669988112','id':'22845'}
 }
 
 prefix_map = {
@@ -22,7 +23,7 @@ prefix_map = {
     'GOOGLE':'GOOGLE',
     'SIDELINE':'SLS',
     'BIGCOMMERCE':'BC',
-    '__':'', # Amazon
+    'AMAZON':'AZ', # Amazon
     '___':'WSH',
     '____':'RK',
     '_____':'WAL',
