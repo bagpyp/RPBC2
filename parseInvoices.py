@@ -26,10 +26,7 @@ import xml.etree.ElementTree as ET
 
 import pandas as pd
 
-pd.options.display.max_rows = 150
-pd.options.display.max_columns = 75
-pd.options.display.width = 180
-pd.options.display.max_colwidth = 30
+
 from collections import Counter
 from tqdm import tqdm
 from time import sleep
