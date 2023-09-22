@@ -1,0 +1,10 @@
+secret_info.py
+
+invoices
+images
+data
+accounting
+
+.vscode
+.idea
+__pycache__
