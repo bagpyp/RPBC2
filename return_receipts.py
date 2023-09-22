@@ -4,11 +4,6 @@ import json
 from returns import get_returns
 import pandas as pd
 
-pd.options.mode.chained_assignment = None
-pd.options.display.max_rows = 150
-pd.options.display.max_columns = 75
-pd.options.display.width = 170
-pd.options.display.max_colwidth = 30
 
 if not test:
     returns = get_returns(test=test)

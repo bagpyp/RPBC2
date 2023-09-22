@@ -15,7 +15,7 @@ from time import sleep
 import os
 import requests
 import json
-from secret_info import base, headers, sls_base, sls_headers
+from secret_info import base, drive, headers, sls_base, sls_headers
 import datetime as dt
 
 
@@ -127,12 +127,7 @@ def sls():
     return orders
 
 
-def pull_invoices(test=False, local=False, clocks=False):
-    if local:
-        drive = "T"
-    else:
-        drive = "E"
-
+def pull_invoices(test=False):
     if not test:
         os.system(f"{drive}:\\ECM\\ecmproc -out -a -stid:001001B")
 
@@ -165,13 +160,6 @@ def pull_invoices(test=False, local=False, clocks=False):
         for invc in invcs:
             invoices.append(store(invc))
 
-    if clocks:
-        types = list("34")
-        picklename = "times"
-    else:
-        types = list("02")
-        picklename = "receipts"
-
     data = [
         {
             k: v
@@ -184,11 +172,11 @@ def pull_invoices(test=False, local=False, clocks=False):
             )
         }
         for invoice in invoices
-        if invoice["INVOICE.invc_type"] in types
+        if invoice["INVOICE.invc_type"] in list("02")  # the two types of receipts
     ]
 
     df = pd.DataFrame(data)
-    df.to_pickle(f"accounting/{picklename}.pkl")
+    df.to_pickle(f"accounting/receipts.pkl")
     df.to_csv(r"\\SERVER\user Shares\Kathy\All Retail Pro Receipts\All RP Receipts.csv")
 
 

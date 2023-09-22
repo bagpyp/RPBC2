@@ -7,11 +7,7 @@ Created on Mon Jun 14 11:27:11 2021
 
 import pandas as pd
 
-pd.options.mode.chained_assignment = None
-pd.options.display.max_rows = 150
-pd.options.display.max_columns = 75
-pd.options.display.width = 180
-pd.options.display.max_colwidth = 30
+
 import datetime as dt
 from secret_info import qftp
 import paramiko

@@ -4,6 +4,26 @@ Created on Mon Oct  5 10:29:51 2020
 
 @author: Bagpyp
 """
+from api import (
+    updatedProducts,
+    deleteProduct,
+    brandIDs,
+    categoryIDs,
+    createBrand,
+    updateProduct,
+    updateCustomField,
+    createProduct,
+    retry,
+    getProductBySku,
+    getProductByName,
+    createCustomField,
+)
+from media import configureOptions, reshapeMedia, archiveMedia, fileDf
+from orders import get_orders
+from out import fromECM
+from payloads import upPayload, newPayload
+from receipts import document
+from returns import get_returns
 
 # controls
 
@@ -17,18 +37,11 @@ import datetime as dt
 a = dt.datetime.now()
 print("began ", a.ctime())
 from time import sleep, gmtime
-import tools
-from maps import to_clearance_map
+from maps import to_clearance_map, clearance_map, category_map, to_ebay_map
 from tqdm import tqdm
-from numpy import where
+from numpy import where, nan
 import pandas as pd
-
-pd.options.mode.chained_assignment = None
-pd.options.display.max_rows = 150
-pd.options.display.max_columns = 75
-pd.options.display.width = 180
-pd.options.display.max_colwidth = 30
-from secret_info import is_nighttime
+from secret_info import is_nighttime, daysAgo
 from account import pull_invoices, pull_orders
 from quivers import send_to_quivers
 
@@ -43,14 +56,14 @@ from quivers import send_to_quivers
 
 # %% ORDERS
 
-new_orders = tools.get_orders()
-tools.document(new_orders)
+new_orders = get_orders()
+document(new_orders)
 
 # %%
 
 w = pd.read_csv("invoices/written.csv")
-new_returns = tools.get_returns()
-tools.document(
+new_returns = get_returns()
+document(
     [
         ret
         for ret in new_returns
@@ -63,9 +76,9 @@ tools.document(
 print("pulling data from ECM")
 
 if test:
-    df = tools.fromECM(run=False, ecm=False)
+    df = fromECM(run=False, ecm=False)
 else:
-    df = tools.fromECM()
+    df = fromECM()
 
 # %%
 
@@ -104,7 +117,7 @@ clr = df[df.DCS.str.match(r"(REN|USD)") & df.qty > 0]
 # remove USD and REN tags in DCS
 clr.DCS = clr.DCS.str.replace("REN", "").str.replace("USD", "")
 # map modified DCSs to above categories
-clr.CAT = clr.DCS.map(tools.clearance_map)
+clr.CAT = clr.DCS.map(clearance_map)
 
 if clearanceIsOn:
     # add clearance dataframe, clr to df
@@ -114,7 +127,7 @@ if clearanceIsOn:
 df = df[~df.DCS.str.match(r"(SER|REN|USD)")]
 
 # map the rest of the categories, map null to Misc
-df.CAT = df.CAT.map(tools.category_map).fillna("Misc")
+df.CAT = df.CAT.map(category_map).fillna("Misc")
 
 # filters products without UPCs w/ length 11, 12 or 13.
 if clearanceIsOn:
@@ -144,7 +157,7 @@ for i in range(1, len(chart)):
 df.webName = df.ssid.map(chart.webName.to_dict())
 
 # options
-df = tools.configureOptions(df)
+df = configureOptions(df)
 
 # %% JOIN AND MEDIATE
 
@@ -177,7 +190,7 @@ if test:
     pdf = pd.read_pickle("data/products.pkl")
 else:
     print("pulling product data from BigCommerce")
-    pdf = tools.updatedProducts().reset_index()
+    pdf = updatedProducts().reset_index()
 
 # should have no effect after problem is fixed
 pdf.p_id = pdf.p_id.astype(int).astype(str)
@@ -187,9 +200,9 @@ df = df[~df.sku.duplicated(keep=False)]
 # LZ for 5 image columns
 for i in range(5):
     if f"image_{i}" not in pdf:
-        pdf[f"image_{i}"] = tools.nan
+        pdf[f"image_{i}"] = nan
 
-pdf = pdf[pdf.v_sku.replace("", tools.nan).notna()][
+pdf = pdf[pdf.v_sku.replace("", nan).notna()][
     [
         "p_name",
         "p_sku",
@@ -206,22 +219,20 @@ pdf = pdf[pdf.v_sku.replace("", tools.nan).notna()][
     + [f"image_{i}" for i in range(5)]
 ]
 
-df = pd.merge(df, pdf, how="left", left_on="sku", right_on="v_sku").replace(
-    "", tools.nan
-)
+df = pd.merge(df, pdf, how="left", left_on="sku", right_on="v_sku").replace("", nan)
 
 # reshape and archive images and descriptions
 
 print("reshaping media...")
 sleep(1)
-df = tools.reshapeMedia(df)
+df = reshapeMedia(df)
 
 print("archiving media...")
 sleep(1)
 # nuke duplicate SKUs
 df = df[~df.sku.duplicated(keep=False)]
 
-tools.archiveMedia(df)
+archiveMedia(df)
 
 # %% DELETE CONFLICT PRODUCTS
 df = pd.read_pickle("data/mediatedDf.pkl")
@@ -230,7 +241,7 @@ nosync = df.groupby("webName").filter(
 )
 
 for id_ in nosync.p_id.dropna().unique().tolist():
-    tools.deleteProduct(id_)
+    deleteProduct(id_)
 
 # problem
 df = df.set_index("sku")
@@ -249,7 +260,7 @@ df.loc[
         "p_id",
         "v_id",
     ],
-] = tools.nan
+] = nan
 
 df.to_pickle("ready.pkl")
 
@@ -263,7 +274,7 @@ if test:
 else:
     df = pd.read_pickle("data/ready.pkl")
     df.update(pd.read_pickle("data/media.pkl"))
-    df = df.join(tools.fileDf())
+    df = df.join(fileDf())
     df.index.name = "sku"
     df = df.reset_index()
 
@@ -280,14 +291,14 @@ else:
     ).fillna(0)
     df.loc[:, ["p_id", "v_id", "v_image_url", "image_0"]] = df[
         ["p_id", "v_id", "v_image_url", "image_0"]
-    ].replace("", tools.nan)
+    ].replace("", nan)
 
-    b = tools.brandIDs()
-    c = tools.categoryIDs()
+    b = brandIDs()
+    c = categoryIDs()
 
     # awesome
     for brand in df[~df.BRAND.isin(list(b.values()))].BRAND.unique():
-        b.update({tools.createBrand(brand): brand})
+        b.update({createBrand(brand): brand})
     df["brand"] = df.BRAND.str.lower().map({v.lower(): str(k) for k, v in b.items()})
     # not awseome yet, must create CAT
     df["cat"] = df.CAT.map({v: str(k) for k, v in c.items()})
@@ -329,8 +340,7 @@ else:
     new = gb.filter(lambda g: g.p_id.count() == 0).groupby("webName", sort=False)
     old = gb.filter(
         lambda g: (
-            g.lModified.max()
-            > (dt.datetime.now() - dt.timedelta(days=tools.daysAgo + 1))
+            g.lModified.max() > (dt.datetime.now() - dt.timedelta(days=daysAgo + 1))
         )
         & (g.p_id.count() == 1)
     ).groupby("webName", sort=False)
@@ -343,7 +353,7 @@ else:
     sleep(1)
     for _, g in tqdm(old):
         try:
-            updatables.append(tools.upPayload(g))
+            updatables.append(upPayload(g))
         except:
             print("exception occurred with \n")
             print(g)
@@ -360,8 +370,8 @@ else:
         for i, u in tqdm(enumerate(updatables)):
             uid = u.pop("id")
             try:
-                res = tools.updateProduct(uid, u)
-                tools.updateCustomField(uid, "eBay Sale Price", u["amazon_price"])
+                res = updateProduct(uid, u)
+                updateCustomField(uid, "eBay Sale Price", u["amazon_price"])
             except Exception:
                 print(i, " connError")
                 updateFailed.append((uid, res))
@@ -370,13 +380,13 @@ else:
                 updated.append(res)
             elif any([r.status_code == 429 for r in res]):
                 sleep(30)
-                res = tools.updateProduct(uid, u, slow=True)
-                tools.updateCustomField(uid, "eBay Sale Price", u["amazon_price"])
+                res = updateProduct(uid, u, slow=True)
+                updateCustomField(uid, "eBay Sale Price", u["amazon_price"])
                 if all([r.ok for r in res]):
                     updated.append(res)
 
             else:
-                # tools.deleteProduct(uid)
+                # deleteProduct(uid)
                 updateFailed.append(res)
 
     # %%
@@ -386,7 +396,7 @@ else:
     # sleep(1)
     for _, g in tqdm(new):
         try:
-            creatables.append(tools.newPayload(g))
+            creatables.append(newPayload(g))
         except:
             print(f"exception occured with {g.sku}\n")
             # print(g)
@@ -403,7 +413,7 @@ else:
 
     for i, c in tqdm(enumerate(creatables)):
         try:
-            res = tools.createProduct(c)
+            res = createProduct(c)
             if not res.ok:
                 if res.reason == "Too Many Requests" or res.status_code == 429:
                     try:
@@ -413,24 +423,22 @@ else:
                             int(res.headers["X-Rate-Limit-Time-Reset-Ms".lower()])
                             / 1000
                         )
-                        res = tools.retry(res)
+                        res = retry(res)
                 if res.reason == "Conflict":
                     if "product sku is a duplicate" in res.text:
                         conflict_sku = c["sku"]
-                        conflict_products = tools.getProductBySku(conflict_sku).json()[
+                        conflict_products = getProductBySku(conflict_sku).json()["data"]
+                        for cp in conflict_products:
+                            deleteProduct(cp["id"])
+                        res = retry(res)
+                    if "product name is a duplicate" in res.text:
+                        conflict_name = c["name"]
+                        conflict_products = getProductByName(conflict_name).json()[
                             "data"
                         ]
                         for cp in conflict_products:
-                            tools.deleteProduct(cp["id"])
-                        res = tools.retry(res)
-                    if "product name is a duplicate" in res.text:
-                        conflict_name = c["name"]
-                        conflict_products = tools.getProductByName(
-                            conflict_name
-                        ).json()["data"]
-                        for cp in conflict_products:
-                            tools.deleteProduct(cp["id"])
-                        res = tools.retry(res)
+                            deleteProduct(cp["id"])
+                        res = retry(res)
                 if (
                     "could not be processed and may not be valid image" in res.text
                     or "could not be downloaded and may be invalid"
@@ -450,20 +458,20 @@ else:
                             if "image_url" in v:
                                 v.pop("image_url")
                     c["is_visible"] = False
-                    res = tools.createProduct(c)
+                    res = createProduct(c)
             if res.ok:
                 created.append(res)
                 j = res.json()["data"]
                 # Add eBay product ID metafields w/ id & cat id
                 p_id = str(j["id"])
                 # add amazon price to custom field
-                tools.updateCustomField(p_id, "eBay Sale Price", c["amazon_price"])
+                updateCustomField(p_id, "eBay Sale Price", c["amazon_price"])
                 cat = str(j["categories"][0])
                 sale_price = str(j["sale_price"])
-                if cat in tools.to_ebay_map:
-                    tools.createCustomField(p_id, "eBay Category ID", cat)
+                if cat in to_ebay_map:
+                    createCustomField(p_id, "eBay Category ID", cat)
                 else:
-                    tools.createCustomField(p_id, "eBay Category ID", "0")
+                    createCustomField(p_id, "eBay Category ID", "0")
 
             else:
                 failed.append(res)
@@ -481,5 +489,4 @@ else:
 
     if is_nighttime:
         pull_invoices()
-        pull_invoices(test=True, clocks=True)
         pull_orders()
