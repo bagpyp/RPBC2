@@ -321,8 +321,8 @@ else:
         )
     ]
     new = [
-        f"{(int(str(year)[:2]) - 1) + int(month > 5)}"
-        + f"-{(int(str(year)[:2])) + int(month > 5)}",
+        f"{(int(str(year)[-2:]) - 1) + int(month > 5)}"
+        + f"-{(int(str(year)[-2:])) + int(month > 5)}",
         f"{year + int(month > 11)}",
     ]
 
