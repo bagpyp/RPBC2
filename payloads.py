@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Oct  5 10:28:24 2020
-
-@author: Web
-"""
-
-
 def searchWords(r):
     r["CAT"].split("/") + r["BRAND"] + r["sku"]
 

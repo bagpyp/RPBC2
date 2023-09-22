@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Oct  5 10:14:03 2020
-
-@author: Web
-"""
-
 import datetime as dt
 import pandas as pd
 import requests

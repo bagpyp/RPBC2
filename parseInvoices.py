@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Dec 21 11:53:48 2020
-
-@author: Web
-"""
 test = False
 
 import datetime as dt

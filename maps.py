@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Oct  5 10:27:43 2020
-
-@author: Web
-"""
-
 customer_data = {
     "Authorize.Net": {"sid": "6006417736096747516", "id": "1010176"},
     "PayPal": {"sid": "791550355979724528", "id": "28207"},

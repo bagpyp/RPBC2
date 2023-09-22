@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Mar 15 12:59:30 2021
-
-@author: Web
-"""
-
 from glob import glob
 import xml.etree.ElementTree as ET
 

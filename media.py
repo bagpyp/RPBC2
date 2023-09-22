@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Oct  5 10:22:09 2020
-
-@author: Web
-"""
-
 from glob import glob
 from numpy import nan
 import pandas as pd

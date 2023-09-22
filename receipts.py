@@ -1,12 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Dec 28 10:54:50 2020
-
-@author: Web
-"""
-
-# %%
-
 from secret_info import stid, drive
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as md

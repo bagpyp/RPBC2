@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Dec 22 10:07:05 2020
-
-@author: Web
-"""
-
 import json
 from json import JSONDecodeError
 import requests

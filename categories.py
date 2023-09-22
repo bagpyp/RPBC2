@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 categories = [
     {"id": 6764, "parent_id": 0, "name": "Ski"},
     {"id": 6765, "parent_id": 6764, "name": "Boots"},

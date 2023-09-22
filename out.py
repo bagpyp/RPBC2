@@ -1,10 +1,3 @@
-# %% -*- coding: utf-8 -*-
-"""
-Created on Mon Oct  5 10:07:33 2020
-
-@author: Bagpyp
-"""
-
 from glob import glob
 from numpy import nan
 import os
