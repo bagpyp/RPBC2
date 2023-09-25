@@ -164,7 +164,7 @@ def products_since(last_modified):
 def updatedProducts():
     # RERUN IF PKL LOST
     # p = products_since('1970-01-01')
-    # p.to_pickle('products.pkl')
+    # p.to_pickle('data/products.pkl')
     p = pd.read_pickle("data/products.pkl")
     if len(p) > 0:
         new_p = products_since(
@@ -182,11 +182,11 @@ def updatedProducts():
             # this is where we should remove all items with duplicated v_skus
             p = p[p.v_id.isin(p.groupby("v_sku", sort=False).v_id.max())]
             # keeping only those whose v_id is... LARGEST
-            p.to_pickle("products.pkl")
+            p.to_pickle("data/products.pkl")
             return p
     else:
         new_p = products_since("1970-01-01")
-        new_p.to_pickle("products.pkl")
+        new_p.to_pickle("data/products.pkl")
         if new_p is None:
             return p
         else:

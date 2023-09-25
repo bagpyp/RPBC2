@@ -101,7 +101,7 @@ def reshapeMedia(df):
     gs = [mediate(g) for _, g in tqdm.tqdm(gb)]
     mdf = pd.concat(gs)
     mdf.description = mdf.description.fillna(mdf.p_description)
-    mdf.to_pickle("mediatedDf.pkl")
+    mdf.to_pickle("data/mediatedDf.pkl")
     return mdf
 
 

@@ -262,7 +262,7 @@ df.loc[
     ],
 ] = nan
 
-df.to_pickle("ready.pkl")
+df.to_pickle("data/ready.pkl")
 
 # %% PULL ARCHIVE, BREAK IN TWO
 
