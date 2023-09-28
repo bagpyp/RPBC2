@@ -110,7 +110,7 @@ for i in range(23, 29):
 
 # ATTN: setting qty to only store quantity (qty1)
 df.qty = df.qty1
-# keeing old DCS name
+# keeping old DCS name
 df["DCSname"] = df.CAT.values
 # extract all positive qty used and renatl products
 clr = df[df.DCS.str.match(r"(REN|USD)") & df.qty > 0]

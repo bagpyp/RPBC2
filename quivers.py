@@ -6,7 +6,16 @@ from secret_info import qftp
 import paramiko
 import os
 
-brands = ["Marker", "Dalbello", "Technica", "Blizzard", "Head", "Tyrollia", "Nordica"]
+brands = [
+    "Marker USA",
+    "Dalbello",
+    "Tecnica",
+    "Blizzard",
+    "HEAD SNOWBOARD",
+    "Head / Tyrollia",
+    "Nordica",
+    "Sidas",
+]
 
 
 def send_to_quivers():
