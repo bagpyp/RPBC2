@@ -58,17 +58,18 @@ def new_orders(test=False):
     for no in new_orders:
         order = {}
         # ADD CHANNELS
+
         if "walmart" in str(no["external_source"]).lower():
             order["id"] = str(no["id"])
             order["payment_id"] = no["staff_notes"].split("\t")[1].split("\n")[0]
             order["channel"] = "WALMART"
             order["payment_zone"] = "PayPal"
-        if "google" in str(no["external_source"]).lower():
+        elif "google" in str(no["external_source"]).lower():
             order["id"] = str(no["id"])
-            # TODO change after paments set up in google
+            # TODO change after payments set up in google
             order["payment_id"] = str(no["external_id"])
             order["channel"] = "GOOGLE"
-            # TODO change after paments set up in google
+            # TODO change after payments set up in google
             order["payment_zone"] = "PayPal"
         elif str(no["external_source"]).lower() == "facebook":
             order["id"] = str(no["id"])
@@ -181,3 +182,7 @@ def get_orders(test=False):
         new_sls_orders(test) + new_orders(test), key=lambda k: k["created_date"]
     )
     # return sorted(new_orders(test), key = lambda k: k['created_date'])
+
+
+if __name__ == "__main__":
+    get_orders()
