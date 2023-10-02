@@ -31,6 +31,48 @@ clearanceIsOn = False
 test = False
 excluded_vendor_codes = []
 excluded_dcs_codes = []
+amazon_excluded_vendors = [
+    "686",
+    "Arbor Snowboards",
+    "Arcade Belts",
+    "Bronson Speed Co.",
+    "Bullet",
+    "Burton",
+    "Capita",
+    "Crab Grab",
+    "Creature",
+    "Darn Tough",
+    "Gnu",
+    "Havaianas",
+    "Helly Hansen",
+    "Hestra",
+    "Hot Chillys",
+    "Hydro Flask",
+    "Independent",
+    "Lib Technologies",
+    "Marmot",
+    "Nike",
+    "OJ III",
+    "PIT VIPER",
+    "Picture Organic Clothing",
+    "RVCA",
+    "Reef",
+    "Ricta",
+    "Salomon Ski",
+    "Santa Cruz",
+    "Smartwool",
+    "Smith",
+    "Spyder Active Sports",
+    "Stance",
+    "Sun Bum",
+    "The North Face",
+    "Theragun",
+    "Turtle Fur",
+    "Under Armour",
+    "Union Binding Company",
+    "Vans",
+    "Wolfgang",
+]
 
 import datetime as dt
 
@@ -335,6 +377,8 @@ else:
 
     df.pAmazon = df.pAmazon.round(2)
 
+    df["listOnAmazon"] = ~df.BRAND.isin(amazon_excluded_vendors)
+
     gb = df.groupby("webName")
 
     new = gb.filter(lambda g: g.p_id.count() == 0).groupby("webName", sort=False)
@@ -369,19 +413,24 @@ else:
         sleep(1)
         for i, u in tqdm(enumerate(updatables)):
             uid = u.pop("id")
-            try:
-                res = updateProduct(uid, u)
-                updateCustomField(uid, "eBay Sale Price", u["amazon_price"])
-            except Exception:
-                print(i, " connError")
-                updateFailed.append((uid, res))
-                continue
+
+            res = updateProduct(uid, u)
+            updateCustomField(uid, "eBay Sale Price", u["amazon_price"])
+            if u["list_on_amazon"]:
+                updateCustomField(uid, "Amazon Status", "Enabled")
+            else:
+                updateCustomField(uid, "Amazon Status", "Disabled")
+
             if all([r.ok for r in res]):
                 updated.append(res)
             elif any([r.status_code == 429 for r in res]):
                 sleep(30)
                 res = updateProduct(uid, u, slow=True)
                 updateCustomField(uid, "eBay Sale Price", u["amazon_price"])
+                if u["list_on_amazon"]:
+                    updateCustomField(uid, "Amazon Status", "Enabled")
+                else:
+                    updateCustomField(uid, "Amazon Status", "Disabled")
                 if all([r.ok for r in res]):
                     updated.append(res)
 
@@ -398,8 +447,6 @@ else:
         try:
             creatables.append(newPayload(g))
         except:
-            print(f"exception occured with {g.sku}\n")
-            # print(g)
             continue
 
     # %% CREATE
@@ -431,7 +478,7 @@ else:
                         for cp in conflict_products:
                             deleteProduct(cp["id"])
                         res = retry(res)
-                    if "product name is a duplicate" in res.text:
+                    elif "product name is a duplicate" in res.text:
                         conflict_name = c["name"]
                         conflict_products = getProductByName(conflict_name).json()[
                             "data"
@@ -462,16 +509,19 @@ else:
             if res.ok:
                 created.append(res)
                 j = res.json()["data"]
-                # Add eBay product ID metafields w/ id & cat id
                 p_id = str(j["id"])
-                # add amazon price to custom field
+                # add custom fields
                 updateCustomField(p_id, "eBay Sale Price", c["amazon_price"])
+                if c["list_on_amazon"]:
+                    updateCustomField(p_id, "Amazon Status", "Enabled")
+                else:
+                    updateCustomField(p_id, "Amazon Status", "Disabled")
                 cat = str(j["categories"][0])
                 sale_price = str(j["sale_price"])
                 if cat in to_ebay_map:
-                    createCustomField(p_id, "eBay Category ID", cat)
+                    updateCustomField(p_id, "eBay Category ID", cat)
                 else:
-                    createCustomField(p_id, "eBay Category ID", "0")
+                    updateCustomField(p_id, "eBay Category ID", "0")
 
             else:
                 failed.append(res)

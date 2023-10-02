@@ -16,6 +16,7 @@ def newPayload(g):
             "name": r["webName"],
             "sale_price": r["pSale"],
             "price": r["pMAP"],
+            "list_on_amazon": r["listOnAmazon"],
             "amazon_price": r["pAmazon"],
             "retail_price": r["pMSRP"],
             "sku": r["sku"],
@@ -143,6 +144,7 @@ def upPayload(g):
             "inventory_level": r["qty"],
             "sale_price": r["pSale"],
             "price": r["pMAP"],
+            "list_on_amazon": r["listOnAmazon"],
             "amazon_price": r["pAmazon"],
             "retail_price": r["pMSRP"],
         }
