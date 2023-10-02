@@ -56,32 +56,31 @@ def new_returns(test=False, all=False):
         o["products"] = requests.get(o["products"]["url"], headers=headers).json()
     orders = []
     for no in new_orders:
-        order = {}
-        # ADD CHANNELS HERE
-        if no["external_source"].lower().contains("walmart"):
-            order["id"] = str(no["id"])
+        order = {"id": str(no["id"])}
+        # ADD CHANNELS
+        external_source = str(no["external_source"]).lower()
+        if "walmart" in external_source:
             order["payment_id"] = no["staff_notes"].split("\t")[1].split("\n")[0]
             order["channel"] = "WALMART"
             order["payment_zone"] = "PayPal"
-        if no["external_source"].lower().contains("google"):
-            order["id"] = str(no["id"])
-            # TODO change after paments set up in google
+        elif "google" in external_source:
             order["payment_id"] = str(no["external_id"])
             order["channel"] = "GOOGLE"
-            # TODO change after paments set up in google
-            order["payment_zone"] = "GoogleShopping"
-        elif no["external_source"].lower() == "facebook":
-            order["id"] = str(no["id"])
+            # TODO change after payments set up in google if necessary
+            order["payment_zone"] = "PayPal"
+        elif "facebook" in external_source:
             order["payment_id"] = str(no["external_id"])
             order["channel"] = "FACEBOOK"
             order["payment_zone"] = "FacebookMarketplace"
-        elif no["external_source"].lower() == "ebay":
-            order["id"] = no["id"]
+        elif "ebay" in external_source:
             order["payment_id"] = str(no["ebay_order_id"])
             order["channel"] = "EBAY"
             order["payment_zone"] = "Ebay"
+        elif "amazon" in external_source:
+            order["payment_id"] = ""
+            order["channel"] = "AMAZON"
+            order["payment_zone"] = "Amazon"
         else:
-            order["id"] = no["id"]
             order["payment_id"] = no["payment_provider_id"]
             order["channel"] = "BIGCOMMERCE"
             if "authorize.net" in no["payment_method"].lower():
@@ -90,6 +89,7 @@ def new_returns(test=False, all=False):
                 order["payment_zone"] = "PayPal"
             else:
                 order["payment_zone"] = "BigCommerce"
+
         # TODO decide tz info
         order["created_date"] = dt.datetime.strptime(
             " ".join(no["date_created"].split(" ")[:-1]), "%a, %d %b %Y %H:%M:%S"
