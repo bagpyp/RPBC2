@@ -16,7 +16,6 @@ from api import (
     retry,
     getProductBySku,
     getProductByName,
-    createCustomField,
 )
 from media import configureOptions, reshapeMedia, archiveMedia, fileDf
 from orders import get_orders
@@ -52,7 +51,7 @@ amazon_excluded_vendors = [
     "Marmot",
     "Nike",
     "Nikwax",
-    "OJ III",
+    "OJ Iii",
     "PIT VIPER",
     "Picture Organic Clothing",
     "RVCA",
@@ -370,24 +369,29 @@ old = gb.filter(
     & (g.p_id.count() == 1)
 ).groupby("webName", sort=False)
 
-# %% UPDATABLES
 
 # UPDATE
 updatables = []
-print("building payloads for update...")
-sleep(1)
-for _, g in tqdm(old):
+for name, g in old:
     try:
         updatables.append(upPayload(g))
     except:
-        print("exception occurred with \n")
-        print(g)
+        print("can't create upPayload for ", name)
+        continue
+
+creatables = []
+# sleep(1)
+for name, g in new:
+    try:
+        creatables.append(newPayload(g))
+    except:
+        print("can't create newPayload for ", name)
         continue
 
 # %% UPDATE
 
 updated = []
-updateFailed = []
+failed_to_update = []
 
 if len(updatables) > 0:
     print(f"updating {len(updatables)} products...")
@@ -416,23 +420,12 @@ if len(updatables) > 0:
                 updated.append(res)
 
         else:
-            # deleteProduct(uid)
-            updateFailed.append(res)
-
-# %%
-
-creatables = []
-# sleep(1)
-for _, g in new:
-    try:
-        creatables.append(newPayload(g))
-    except:
-        continue
+            failed_to_update.append(res)
 
 # %% CREATE
 
 created = []
-failed = []
+failed_to_create = []
 
 if len(creatables) > 0:
     print(f"creating {len(creatables)} products...")
@@ -499,7 +492,7 @@ for i, c in tqdm(enumerate(creatables)):
                 updateCustomField(p_id, "eBay Category ID", "0")
 
         else:
-            failed.append(res)
+            failed_to_create.append(res)
 
     except Exception:
         continue
@@ -507,10 +500,7 @@ for i, c in tqdm(enumerate(creatables)):
 # %%
 print("runtime: ", dt.datetime.now() - a)
 
-try:
-    send_to_quivers()
-except Exception:
-    pass
+send_to_quivers()
 
 if is_nighttime:
     pull_invoices()
