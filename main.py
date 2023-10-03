@@ -51,6 +51,7 @@ amazon_excluded_vendors = [
     "Lib Technologies",
     "Marmot",
     "Nike",
+    "Nikwax",
     "OJ III",
     "PIT VIPER",
     "Picture Organic Clothing",
