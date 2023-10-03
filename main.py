@@ -26,9 +26,8 @@ from receipts import document
 from returns import get_returns
 
 # controls
-
+fast = False
 clearanceIsOn = False
-test = False
 excluded_vendor_codes = []
 excluded_dcs_codes = []
 amazon_excluded_vendors = [
@@ -87,42 +86,35 @@ from secret_info import is_nighttime, daysAgo
 from account import pull_invoices, pull_orders
 from quivers import send_to_quivers
 
-"""TO ADD CHANNELS!!!"""
-# customer and employee data has to go into MAPS.PY
-# good luck bitch!!!
-
-# taxes in walmart shouldn't be in receipt in rp
-# comment 1 needs to be WAL <num>
-# comment 2 needs to be
-
 
 # %% ORDERS
+if not fast:
+    new_orders = get_orders()
+    document(new_orders)
 
-new_orders = get_orders()
-document(new_orders)
+    # %% RETURNS
 
-# %%
-
-w = pd.read_csv("invoices/written.csv")
-new_returns = get_returns()
-document(
-    [
-        ret
-        for ret in new_returns
-        if str(ret.get("id")) in w.comment1.apply(lambda x: x.split(" ")[1]).tolist()
-    ],
-    regular=False,
-)
+    w = pd.read_csv("invoices/written.csv")
+    new_returns = get_returns()
+    document(
+        [
+            ret
+            for ret in new_returns
+            if str(ret.get("id"))
+            in w.comment1.apply(lambda x: x.split(" ")[1]).tolist()
+        ],
+        regular=False,
+    )
 
 # %% ECM
 print("pulling data from ECM")
 
-if test:
+if fast:
     df = fromECM(run=False, ecm=False)
 else:
     df = fromECM()
 
-# %%
+# %% TRANSFORM
 
 
 df = df[(~df.VC.isin(excluded_vendor_codes)) & (~df.DCS.isin(excluded_dcs_codes))]
@@ -198,10 +190,13 @@ for i in range(1, len(chart)):
         j += 1
 df.webName = df.ssid.map(chart.webName.to_dict())
 
-# options
+
+# %%  PRODUCT OPTIONS
+
 df = configureOptions(df)
 
-# %% JOIN AND MEDIATE
+
+# %%  JOIN AND MEDIATE
 
 
 df = df[
@@ -228,7 +223,7 @@ df = df[
     ]
 ]
 
-if test:
+if fast:
     pdf = pd.read_pickle("data/products.pkl")
 else:
     print("pulling product data from BigCommerce")
@@ -304,239 +299,218 @@ df.loc[
     ],
 ] = nan
 
+df.update(pd.read_pickle("data/media.pkl"))
+df = df.join(fileDf())
+df.index.name = "sku"
+df = df.reset_index()
+
+# fill nulls with native zeros
+df.loc[:, ["p_id", "v_id", "v_image_url", "image_0"]] = df[
+    ["p_id", "v_id", "v_image_url", "image_0"]
+].fillna("")
+df.loc[:, df.select_dtypes(object).columns.tolist()] = df.select_dtypes(object).fillna(
+    ""
+)
+df.loc[:, df.select_dtypes(int).columns.tolist()] = df.select_dtypes(int).fillna(0)
+df.loc[:, df.select_dtypes(float).columns.tolist()] = df.select_dtypes(float).fillna(0)
+df.loc[:, ["p_id", "v_id", "v_image_url", "image_0"]] = df[
+    ["p_id", "v_id", "v_image_url", "image_0"]
+].replace("", nan)
+
+b = brandIDs()
+c = categoryIDs()
+
+# awesome
+for brand in df[~df.BRAND.isin(list(b.values()))].BRAND.unique():
+    b.update({createBrand(brand): brand})
+df["brand"] = df.BRAND.str.lower().map({v.lower(): str(k) for k, v in b.items()})
+# not awseome yet, must create CAT
+df["cat"] = df.CAT.map({v: str(k) for k, v in c.items()})
+
+year = gmtime().tm_year
+month = gmtime().tm_mon
+# only showing last 3 years - (3)
+# winter product becomes old in May - (4)
+# summer product becomes old in November - (11)
+old = [
+    f"{n - 1}-{n}"
+    for n in range(
+        int(str((year + 1) - 3)[2:]) + int(month >= 5),
+        int(str(year)[2:]) + int(month >= 5),
+    )
+] + [
+    str(i)
+    for i in range(int(str(year - 3)) + int(month >= 5), int(year) + int(month >= 11))
+]
+new = [
+    f"{(int(str(year)[-2:]) - 1) + int(month > 5)}"
+    + f"-{(int(str(year)[-2:])) + int(month > 5)}",
+    f"{year + int(month > 11)}",
+]
+
+df["is_old"] = df.webName.str.contains("|".join(old))
+df["clearance_cat"] = where(
+    df.webName.str.contains("|".join(old)), df.cat.map(to_clearance_map), ""
+)
+
+df = df[df.brand != ""]
+
+df.pAmazon = df.pAmazon.round(2)
+
+df["listOnAmazon"] = ~df.BRAND.isin(amazon_excluded_vendors)
+
 df.to_pickle("data/ready.pkl")
 
-# %% PULL ARCHIVE, BREAK IN TWO
+gb = df.groupby("webName")
 
-df = pd.read_pickle("data/ready.pkl")
+new = gb.filter(lambda g: g.p_id.count() == 0).groupby("webName", sort=False)
+old = gb.filter(
+    lambda g: (g.lModified.max() > (dt.datetime.now() - dt.timedelta(days=daysAgo + 1)))
+    & (g.p_id.count() == 1)
+).groupby("webName", sort=False)
 
-if test:
-    print("runtime: ", dt.datetime.now() - a)
+# %% UPDATABLES
 
-else:
-    df = pd.read_pickle("data/ready.pkl")
-    df.update(pd.read_pickle("data/media.pkl"))
-    df = df.join(fileDf())
-    df.index.name = "sku"
-    df = df.reset_index()
+# UPDATE
+updatables = []
+print("building payloads for update...")
+sleep(1)
+for _, g in tqdm(old):
+    try:
+        updatables.append(upPayload(g))
+    except:
+        print("exception occurred with \n")
+        print(g)
+        continue
 
-    # fill nulls with native zeros
-    df.loc[:, ["p_id", "v_id", "v_image_url", "image_0"]] = df[
-        ["p_id", "v_id", "v_image_url", "image_0"]
-    ].fillna("")
-    df.loc[:, df.select_dtypes(object).columns.tolist()] = df.select_dtypes(
-        object
-    ).fillna("")
-    df.loc[:, df.select_dtypes(int).columns.tolist()] = df.select_dtypes(int).fillna(0)
-    df.loc[:, df.select_dtypes(float).columns.tolist()] = df.select_dtypes(
-        float
-    ).fillna(0)
-    df.loc[:, ["p_id", "v_id", "v_image_url", "image_0"]] = df[
-        ["p_id", "v_id", "v_image_url", "image_0"]
-    ].replace("", nan)
+# %% UPDATE
 
-    b = brandIDs()
-    c = categoryIDs()
+updated = []
+updateFailed = []
 
-    # awesome
-    for brand in df[~df.BRAND.isin(list(b.values()))].BRAND.unique():
-        b.update({createBrand(brand): brand})
-    df["brand"] = df.BRAND.str.lower().map({v.lower(): str(k) for k, v in b.items()})
-    # not awseome yet, must create CAT
-    df["cat"] = df.CAT.map({v: str(k) for k, v in c.items()})
-
-    year = gmtime().tm_year
-    month = gmtime().tm_mon
-    # only showing last 3 years - (3)
-    # winter product becomes old in May - (4)
-    # summer product becomes old in November - (11)
-    old = [
-        f"{n - 1}-{n}"
-        for n in range(
-            int(str((year + 1) - 3)[2:]) + int(month >= 5),
-            int(str(year)[2:]) + int(month >= 5),
-        )
-    ] + [
-        str(i)
-        for i in range(
-            int(str(year - 3)) + int(month >= 5), int(year) + int(month >= 11)
-        )
-    ]
-    new = [
-        f"{(int(str(year)[-2:]) - 1) + int(month > 5)}"
-        + f"-{(int(str(year)[-2:])) + int(month > 5)}",
-        f"{year + int(month > 11)}",
-    ]
-
-    df["is_old"] = df.webName.str.contains("|".join(old))
-    df["clearance_cat"] = where(
-        df.webName.str.contains("|".join(old)), df.cat.map(to_clearance_map), ""
-    )
-
-    df = df[df.brand != ""]
-
-    df.pAmazon = df.pAmazon.round(2)
-
-    df["listOnAmazon"] = ~df.BRAND.isin(amazon_excluded_vendors)
-
-    gb = df.groupby("webName")
-
-    new = gb.filter(lambda g: g.p_id.count() == 0).groupby("webName", sort=False)
-    old = gb.filter(
-        lambda g: (
-            g.lModified.max() > (dt.datetime.now() - dt.timedelta(days=daysAgo + 1))
-        )
-        & (g.p_id.count() == 1)
-    ).groupby("webName", sort=False)
-
-    # %% UPDATABLES
-
-    # UPDATE
-    updatables = []
-    print("building payloads for update...")
+if len(updatables) > 0:
+    print(f"updating {len(updatables)} products...")
     sleep(1)
-    for _, g in tqdm(old):
-        try:
-            updatables.append(upPayload(g))
-        except:
-            print("exception occurred with \n")
-            print(g)
-            continue
+    for i, u in tqdm(enumerate(updatables)):
+        uid = u.pop("id")
 
-    # %% UPDATE
+        res = updateProduct(uid, u)
+        updateCustomField(uid, "eBay Sale Price", u["amazon_price"])
+        if u["list_on_amazon"]:
+            updateCustomField(uid, "Amazon Status", "Enabled")
+        else:
+            updateCustomField(uid, "Amazon Status", "Disabled")
 
-    updated = []
-    updateFailed = []
-
-    if len(updatables) > 0:
-        print(f"updating {len(updatables)} products...")
-        sleep(1)
-        for i, u in tqdm(enumerate(updatables)):
-            uid = u.pop("id")
-
-            res = updateProduct(uid, u)
+        if all([r.ok for r in res]):
+            updated.append(res)
+        elif any([r.status_code == 429 for r in res]):
+            sleep(30)
+            res = updateProduct(uid, u, slow=True)
             updateCustomField(uid, "eBay Sale Price", u["amazon_price"])
             if u["list_on_amazon"]:
                 updateCustomField(uid, "Amazon Status", "Enabled")
             else:
                 updateCustomField(uid, "Amazon Status", "Disabled")
-
             if all([r.ok for r in res]):
                 updated.append(res)
-            elif any([r.status_code == 429 for r in res]):
-                sleep(30)
-                res = updateProduct(uid, u, slow=True)
-                updateCustomField(uid, "eBay Sale Price", u["amazon_price"])
-                if u["list_on_amazon"]:
-                    updateCustomField(uid, "Amazon Status", "Enabled")
-                else:
-                    updateCustomField(uid, "Amazon Status", "Disabled")
-                if all([r.ok for r in res]):
-                    updated.append(res)
 
-            else:
-                # deleteProduct(uid)
-                updateFailed.append(res)
+        else:
+            # deleteProduct(uid)
+            updateFailed.append(res)
 
-    # %%
+# %%
 
-    creatables = []
-    print("building payloads for creation...")
-    # sleep(1)
-    for _, g in tqdm(new):
-        try:
-            creatables.append(newPayload(g))
-        except:
-            continue
-
-    # %% CREATE
-
-    created = []
-    failed = []
-
-    if len(creatables) > 0:
-        print("product creation imminent...")
-        sleep(1)
-
-    for i, c in tqdm(enumerate(creatables)):
-        try:
-            res = createProduct(c)
-            if not res.ok:
-                if res.reason == "Too Many Requests" or res.status_code == 429:
-                    try:
-                        sleep(int(res.headers["X-Rate-Limit-Time-Reset-Ms"]) / 1000)
-                    except KeyError:
-                        sleep(
-                            int(res.headers["X-Rate-Limit-Time-Reset-Ms".lower()])
-                            / 1000
-                        )
-                        res = retry(res)
-                if res.reason == "Conflict":
-                    if "product sku is a duplicate" in res.text:
-                        conflict_sku = c["sku"]
-                        conflict_products = getProductBySku(conflict_sku).json()["data"]
-                        for cp in conflict_products:
-                            deleteProduct(cp["id"])
-                        res = retry(res)
-                    elif "product name is a duplicate" in res.text:
-                        conflict_name = c["name"]
-                        conflict_products = getProductByName(conflict_name).json()[
-                            "data"
-                        ]
-                        for cp in conflict_products:
-                            deleteProduct(cp["id"])
-                        res = retry(res)
-                if (
-                    "could not be processed and may not be valid image" in res.text
-                    or "could not be downloaded and may be invalid"
-                ):
-                    # TODO! have to remove image from media.pkl ???
-                    # otherwise products will keep being set to visible when they
-                    # shouldn't be
-                    # call Robbie 5038034458 and say "you're retrying priduct
-                    # creation even though the images can't get processed in
-                    # BigCommerce.  the media pickle has a record of that image so
-                    # it's gtting set to visible...
-
-                    if "images" in c:
-                        c.pop("images")
-                    if "variants" in c:
-                        for v in c["variants"]:
-                            if "image_url" in v:
-                                v.pop("image_url")
-                    c["is_visible"] = False
-                    res = createProduct(c)
-            if res.ok:
-                created.append(res)
-                j = res.json()["data"]
-                p_id = str(j["id"])
-                # add custom fields
-                updateCustomField(p_id, "eBay Sale Price", c["amazon_price"])
-                if c["list_on_amazon"]:
-                    updateCustomField(p_id, "Amazon Status", "Enabled")
-                else:
-                    updateCustomField(p_id, "Amazon Status", "Disabled")
-                cat = str(j["categories"][0])
-                sale_price = str(j["sale_price"])
-                if cat in to_ebay_map:
-                    updateCustomField(p_id, "eBay Category ID", cat)
-                else:
-                    updateCustomField(p_id, "eBay Category ID", "0")
-
-            else:
-                failed.append(res)
-
-        except Exception:
-            continue
-
-    # %%
-    print("runtime: ", dt.datetime.now() - a)
-
+creatables = []
+# sleep(1)
+for _, g in new:
     try:
-        send_to_quivers()
-    except Exception:
-        pass
+        creatables.append(newPayload(g))
+    except:
+        continue
 
-    if is_nighttime:
-        pull_invoices()
-        pull_orders()
+# %% CREATE
+
+created = []
+failed = []
+
+if len(creatables) > 0:
+    print(f"creating {len(creatables)} products...")
+    sleep(1)
+
+for i, c in tqdm(enumerate(creatables)):
+    try:
+        res = createProduct(c)
+        if not res.ok:
+            if res.reason == "Too Many Requests" or res.status_code == 429:
+                try:
+                    sleep(int(res.headers["X-Rate-Limit-Time-Reset-Ms"]) / 1000)
+                except KeyError:
+                    sleep(int(res.headers["X-Rate-Limit-Time-Reset-Ms".lower()]) / 1000)
+                    res = retry(res)
+            if res.reason == "Conflict":
+                if "product sku is a duplicate" in res.text:
+                    conflict_sku = c["sku"]
+                    conflict_products = getProductBySku(conflict_sku).json()["data"]
+                    for cp in conflict_products:
+                        deleteProduct(cp["id"])
+                    res = retry(res)
+                elif "product name is a duplicate" in res.text:
+                    conflict_name = c["name"]
+                    conflict_products = getProductByName(conflict_name).json()["data"]
+                    for cp in conflict_products:
+                        deleteProduct(cp["id"])
+                    res = retry(res)
+            if (
+                "could not be processed and may not be valid image" in res.text
+                or "could not be downloaded and may be invalid"
+            ):
+                # TODO! have to remove image from media.pkl ???
+                # otherwise products will keep being set to visible when they
+                # shouldn't be
+                # call Robbie 5038034458 and say "you're retrying priduct
+                # creation even though the images can't get processed in
+                # BigCommerce.  the media pickle has a record of that image so
+                # it's gtting set to visible...
+
+                if "images" in c:
+                    c.pop("images")
+                if "variants" in c:
+                    for v in c["variants"]:
+                        if "image_url" in v:
+                            v.pop("image_url")
+                c["is_visible"] = False
+                res = createProduct(c)
+        if res.ok:
+            created.append(res)
+            j = res.json()["data"]
+            p_id = str(j["id"])
+            # add custom fields
+            updateCustomField(p_id, "eBay Sale Price", c["amazon_price"])
+            if c["list_on_amazon"]:
+                updateCustomField(p_id, "Amazon Status", "Enabled")
+            else:
+                updateCustomField(p_id, "Amazon Status", "Disabled")
+            cat = str(j["categories"][0])
+            sale_price = str(j["sale_price"])
+            if cat in to_ebay_map:
+                updateCustomField(p_id, "eBay Category ID", cat)
+            else:
+                updateCustomField(p_id, "eBay Category ID", "0")
+
+        else:
+            failed.append(res)
+
+    except Exception:
+        continue
+
+# %%
+print("runtime: ", dt.datetime.now() - a)
+
+try:
+    send_to_quivers()
+except Exception:
+    pass
+
+if is_nighttime:
+    pull_invoices()
+    pull_orders()
