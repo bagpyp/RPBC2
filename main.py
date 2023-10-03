@@ -82,6 +82,7 @@ from maps import to_clearance_map, clearance_map, category_map, to_ebay_map
 from tqdm import tqdm
 from numpy import where, nan
 import pandas as pd
+import re
 from secret_info import is_nighttime, daysAgo
 from account import pull_invoices, pull_orders
 from quivers import send_to_quivers
@@ -299,7 +300,8 @@ df.loc[
     ],
 ] = nan
 
-df.update(pd.read_pickle("data/media.pkl"))
+mdf = pd.read_pickle("data/media.pkl")
+df.update(mdf)
 df = df.join(fileDf())
 df.index.name = "sku"
 df = df.reset_index()
@@ -458,20 +460,28 @@ for i, c in tqdm(enumerate(creatables)):
                 "could not be processed and may not be valid image" in res.text
                 or "could not be downloaded and may be invalid"
             ):
-                # TODO! have to remove image from media.pkl ???
-                # otherwise products will keep being set to visible when they
-                # shouldn't be
-                # call Robbie 5038034458 and say "you're retrying priduct
-                # creation even though the images can't get processed in
-                # BigCommerce.  the media pickle has a record of that image so
-                # it's gtting set to visible...
-
+                broken_image_urls = []
                 if "images" in c:
-                    c.pop("images")
+                    ims = c.pop("images")
+                    for im in ims:
+                        if "image_url" in im:
+                            broken_image_urls.append(im["image_url"])
                 if "variants" in c:
                     for v in c["variants"]:
                         if "image_url" in v:
-                            v.pop("image_url")
+                            im = v.pop("image_url")
+                            broken_image_urls.append(im)
+                bad_image_skus = list(
+                    set(
+                        [
+                            re.search(r"(\d-\d{5,6}_?\d?)", url).group(1).split("_")[0]
+                            for url in broken_image_urls
+                            if re.search(r"\d-\d{5,6}_?\d?", url)
+                        ]
+                    )
+                )
+                mdf.loc[bad_image_skus, mdf.columns != "description"] = nan
+                mdf.to_pickle("data/media.pkl")
                 c["is_visible"] = False
                 res = createProduct(c)
         if res.ok:
