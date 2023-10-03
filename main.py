@@ -20,7 +20,7 @@ from api import (
 from media import configureOptions, reshapeMedia, archiveMedia, fileDf
 from orders import get_orders
 from out import fromECM
-from payloads import upPayload, newPayload
+from payloads import product_update_payload, product_creation_payload
 from receipts import document
 from returns import get_returns
 
@@ -376,7 +376,7 @@ old = gb.filter(
 updatables = []
 for name, g in old:
     try:
-        updatables.append(upPayload(g))
+        updatables.append(product_update_payload(g))
     except:
         print("can't create upPayload for ", name)
         continue
@@ -385,7 +385,7 @@ creatables = []
 # sleep(1)
 for name, g in new:
     try:
-        creatables.append(newPayload(g))
+        creatables.append(product_creation_payload(g))
     except:
         print("can't create newPayload for ", name)
         continue

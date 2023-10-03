@@ -1,8 +1,4 @@
-def searchWords(r):
-    r["CAT"].split("/") + r["BRAND"] + r["sku"]
-
-
-def newPayload(g):
+def product_creation_payload(g):
     product = {}
     g = g.fillna("").to_dict("records")
     r = g[0]
@@ -23,16 +19,17 @@ def newPayload(g):
             "description": r["description"],
         }
     )
+    product.update({"is_visible": False})
+    product_has_images = 0
     if r["image_0_file"] != "":
         product.update({"is_visible": True})
-        hasImages = 1
-    elif r["image_0_file"] == "":
-        product.update({"is_visible": False})
-        hasImages = 0
+        product_has_images += 1
+
     for i in range(1, 5):
         if r[f"image_{i}_file"] != "":
-            hasImages += 1
-    if hasImages:
+            product_has_images += 1
+
+    if product_has_images:
         product.update(
             {
                 "images": [
@@ -134,7 +131,7 @@ def newPayload(g):
     return product
 
 
-def upPayload(g):
+def product_update_payload(g):
     product = {}
     g = g.fillna("").to_dict("records")
     r = g[0]
