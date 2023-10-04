@@ -1,7 +1,8 @@
 import pandas as pd
 from numpy import where
-
+from pprint import pprint
 from api import updateCustomField, brandIDs
+from tqdm import tqdm
 
 #  copied list from main.py, can't import it without running main
 amazon_excluded_vendors = [
@@ -46,8 +47,9 @@ amazon_excluded_vendors = [
     "Vans",
     "Wolfgang",
 ]  # ex/ "686",
+big_commerce_brands = brandIDs()
 big_commerce_brands = {
-    v: k for k, v in brandIDs().values()
+    v: k for k, v in big_commerce_brands.items()
 }  # ex/ "187 Killer Pads": 5856,
 
 #  unique brand IDs in BC of brands we can't list on Amazon
@@ -70,5 +72,25 @@ pdf.loc[:, "p_id"] = pdf.p_id.astype(int)
 custom_fields = pdf.set_index("p_id").amazon_status.to_dict()
 
 if __name__ == "__main__":
-    for p_id, amazon_status in custom_fields.items():
-        updateCustomField(p_id, "Amazon Status", amazon_status)
+    pdf = pd.read_pickle("../data/products.pkl")
+    pdf_changed = False
+    i = -1
+    for p_id, amazon_status in tqdm(custom_fields.items()):
+        i += 1
+        if (
+            i == 368
+        ):  # already handled this many records (need to redo them though, because we didn't commit!)
+            try:
+                res = updateCustomField(p_id, "Amazon Status", amazon_status)
+                if not res.ok:
+                    if "A product was not found with an id of " in res.text:
+                        pdf = pdf[pdf.p_id != p_id]
+                        tqdm.write(f"removed product with id {p_id} from pdf")
+                        pdf_changed = True
+                    else:
+                        pprint(res.json())
+            except Exception as e:
+                print(e)
+    if pdf_changed:
+        print("committing pdf changes to products.pkl")
+        pdf.to_pickle("../data/products.pkl")

@@ -19,7 +19,7 @@ brands = [
 
 
 def send_to_quivers():
-    df = pd.read_pickle("data/ready.pkl")
+    df = pd.read_pickle("data/ready.pkl").set_index("sku")
 
     qdf = df.loc[
         # 1- or 2- type product, not class representatives, non-null upc
