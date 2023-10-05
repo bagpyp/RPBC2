@@ -5,17 +5,17 @@ Created on Mon Oct  5 10:29:51 2020
 @author: Bagpyp
 """
 from api import (
-    updatedProducts,
-    deleteProduct,
-    brandIDs,
-    categoryIDs,
-    createBrand,
-    updateProduct,
-    updateCustomField,
-    createProduct,
-    retry,
-    getProductBySku,
-    getProductByName,
+    updated_products,
+    delete_product,
+    get_all_brand_ids,
+    get_all_category_ids,
+    create_brand,
+    update_product,
+    update_custom_field,
+    create_product,
+    retry_request_using_response,
+    get_product_by_sku,
+    get_product_by_name,
 )
 from media import configureOptions, reshapeMedia, archiveMedia, fileDf
 from orders import get_orders
@@ -228,7 +228,7 @@ if fast:
     pdf = pd.read_pickle("data/products.pkl")
 else:
     print("pulling product data from BigCommerce")
-    pdf = updatedProducts().reset_index()
+    pdf = updated_products().reset_index()
 
 # should have no effect after problem is fixed
 pdf.p_id = pdf.p_id.astype(int).astype(str)
@@ -279,7 +279,7 @@ nosync = df.groupby("webName").filter(
 )
 
 for id_ in nosync.p_id.dropna().unique().tolist():
-    deleteProduct(id_)
+    delete_product(id_)
 
 # problem
 df = df.set_index("sku")
@@ -319,12 +319,12 @@ df.loc[:, ["p_id", "v_id", "v_image_url", "image_0"]] = df[
     ["p_id", "v_id", "v_image_url", "image_0"]
 ].replace("", nan)
 
-b = brandIDs()
-c = categoryIDs()
+b = get_all_brand_ids()
+c = get_all_category_ids()
 
 # awesome
 for brand in df[~df.BRAND.isin(list(b.values()))].BRAND.unique():
-    b.update({createBrand(brand): brand})
+    b.update({create_brand(brand): brand})
 df["brand"] = df.BRAND.str.lower().map({v.lower(): str(k) for k, v in b.items()})
 # not awseome yet, must create CAT
 df["cat"] = df.CAT.map({v: str(k) for k, v in c.items()})
@@ -401,23 +401,23 @@ if len(updatables) > 0:
     for i, u in tqdm(enumerate(updatables)):
         uid = u.pop("id")
 
-        res = updateProduct(uid, u)
-        updateCustomField(uid, "eBay Sale Price", u["amazon_price"])
+        res = update_product(uid, u)
+        update_custom_field(uid, "eBay Sale Price", u["amazon_price"])
         if u["list_on_amazon"]:
-            updateCustomField(uid, "Amazon Status", "Enabled")
+            update_custom_field(uid, "Amazon Status", "Enabled")
         else:
-            updateCustomField(uid, "Amazon Status", "Disabled")
+            update_custom_field(uid, "Amazon Status", "Disabled")
 
         if all([r.ok for r in res]):
             updated.append(res)
         elif any([r.status_code == 429 for r in res]):
             sleep(30)
-            res = updateProduct(uid, u, slow=True)
-            updateCustomField(uid, "eBay Sale Price", u["amazon_price"])
+            res = update_product(uid, u, slow=True)
+            update_custom_field(uid, "eBay Sale Price", u["amazon_price"])
             if u["list_on_amazon"]:
-                updateCustomField(uid, "Amazon Status", "Enabled")
+                update_custom_field(uid, "Amazon Status", "Enabled")
             else:
-                updateCustomField(uid, "Amazon Status", "Disabled")
+                update_custom_field(uid, "Amazon Status", "Disabled")
             if all([r.ok for r in res]):
                 updated.append(res)
 
@@ -435,27 +435,29 @@ if len(creatables) > 0:
 
 for i, c in tqdm(enumerate(creatables)):
     try:
-        res = createProduct(c)
+        res = create_product(c)
         if not res.ok:
             if res.reason == "Too Many Requests" or res.status_code == 429:
                 try:
                     sleep(int(res.headers["X-Rate-Limit-Time-Reset-Ms"]) / 1000)
                 except KeyError:
                     sleep(int(res.headers["X-Rate-Limit-Time-Reset-Ms".lower()]) / 1000)
-                    res = retry(res)
+                    res = retry_request_using_response(res)
             if res.reason == "Conflict":
                 if "product sku is a duplicate" in res.text:
                     conflict_sku = c["sku"]
-                    conflict_products = getProductBySku(conflict_sku).json()["data"]
+                    conflict_products = get_product_by_sku(conflict_sku).json()["data"]
                     for cp in conflict_products:
-                        deleteProduct(cp["id"])
-                    res = retry(res)
+                        delete_product(cp["id"])
+                    res = retry_request_using_response(res)
                 elif "product name is a duplicate" in res.text:
                     conflict_name = c["name"]
-                    conflict_products = getProductByName(conflict_name).json()["data"]
+                    conflict_products = get_product_by_name(conflict_name).json()[
+                        "data"
+                    ]
                     for cp in conflict_products:
-                        deleteProduct(cp["id"])
-                    res = retry(res)
+                        delete_product(cp["id"])
+                    res = retry_request_using_response(res)
             if (
                 "could not be processed and may not be valid image" in res.text
                 or "could not be downloaded and may be invalid"
@@ -483,23 +485,23 @@ for i, c in tqdm(enumerate(creatables)):
                 mdf.loc[bad_image_skus, mdf.columns != "description"] = nan
                 mdf.to_pickle("data/media.pkl")
                 c["is_visible"] = False
-                res = createProduct(c)
+                res = create_product(c)
         if res.ok:
             created.append(res)
             j = res.json()["data"]
             p_id = str(j["id"])
             # add custom fields
-            updateCustomField(p_id, "eBay Sale Price", c["amazon_price"])
+            update_custom_field(p_id, "eBay Sale Price", c["amazon_price"])
             if c["list_on_amazon"]:
-                updateCustomField(p_id, "Amazon Status", "Enabled")
+                update_custom_field(p_id, "Amazon Status", "Enabled")
             else:
-                updateCustomField(p_id, "Amazon Status", "Disabled")
+                update_custom_field(p_id, "Amazon Status", "Disabled")
             cat = str(j["categories"][0])
             sale_price = str(j["sale_price"])
             if cat in to_ebay_map:
-                updateCustomField(p_id, "eBay Category ID", cat)
+                update_custom_field(p_id, "eBay Category ID", cat)
             else:
-                updateCustomField(p_id, "eBay Category ID", "0")
+                update_custom_field(p_id, "eBay Category ID", "0")
 
         else:
             failed_to_create.append(res)
