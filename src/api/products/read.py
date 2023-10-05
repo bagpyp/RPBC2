@@ -1,37 +1,27 @@
 import datetime as dt
+
 import pandas as pd
 import requests
+from src.api.request_utils import call_iteratively
+
 from secret_info import headers, base, daysAgo
-import time
-import tqdm
 
 
-def retry_request_using_response(res):
-    r = res.request
-    res = requests.request(method=r.method, url=r.url, headers=r.headers)
+def get_product_by_sku(sku):
+    h = headers.copy()
+    url = base + f"v3/catalog/products?sku={sku}"
+    res = requests.get(url, headers=h)
     return res
 
 
-def call_iteratively(call, *args):
-    res = call(*args)
-    if res.status_code == 429:
-        s = int(res.headers["X-Rate-Limit-Time-Reset-Ms"]) / 1000
-        print(f"{s} seconds until rate-limit rest")
-        time.sleep(s)
-        print("slept")
-        retry_request_using_response(res)
-    elif res.ok:
-        j = res.json()
-        data = j["data"]
-        pag = j["meta"]["pagination"]
-        for i in tqdm.tqdm(range(2, pag["total_pages"] + 1)):
-            subres = call(*args, i)
-            if subres.ok:
-                data.extend(subres.json()["data"])
-        return data
+def get_product_by_name(name_):
+    h = headers.copy()
+    url = base + f"v3/catalog/products?name={name_}"
+    res = requests.get(url, headers=h)
+    return res
 
 
-def get_products(last_modified, i=1):
+def _get_products(last_modified, i=1):
     url = (
         base
         + "v3/catalog/products"
@@ -44,8 +34,8 @@ def get_products(last_modified, i=1):
     return res
 
 
-def products_since(last_modified):
-    data = call_iteratively(get_products, last_modified)
+def _products_since(last_modified):
+    data = call_iteratively(_get_products, last_modified)
     products = []
 
     for product in data:
@@ -156,9 +146,9 @@ def products_since(last_modified):
 
 
 def updated_products():
-    pdf = pd.read_pickle("data/products.pkl")
+    pdf = pd.read_pickle("../../../data/products.pkl")
     if len(pdf) > 0:
-        new_p = products_since(
+        new_p = _products_since(
             (dt.datetime.now() - dt.timedelta(days=daysAgo)).strftime(
                 "%Y-%m-%dT%H:%M:%S-07:00"
             )
@@ -176,136 +166,9 @@ def updated_products():
             pdf.to_pickle("data/products.pkl")
             return pdf
     else:
-        new_p = products_since("1970-01-01")
+        new_p = _products_since("1970-01-01")
         new_p.to_pickle("data/products.pkl")
         if new_p is None:
             return pdf
         else:
             return new_p
-
-
-def get_product_by_sku(sku):
-    h = headers.copy()
-    url = base + f"v3/catalog/products?sku={sku}"
-    res = requests.get(url, headers=h)
-    return res
-
-
-def get_product_by_name(name_):
-    h = headers.copy()
-    url = base + f"v3/catalog/products?name={name_}"
-    res = requests.get(url, headers=h)
-    return res
-
-
-def delete_product(id_):
-    h = headers.copy()
-    url = base + f"v3/catalog/products/{id_}"
-    res = requests.delete(url, headers=h)
-    return res
-
-
-def create_product(data):
-    url = base + "v3/catalog/products"
-    h = headers.copy()
-    h.update({"content-type": "application/json"})
-    res = requests.post(url, headers=h, json=data)
-    return res
-
-
-def update_product(id_, data, slow=False):
-    responses = []
-    url = base + f"v3/catalog/products/{id_}"
-    h = headers.copy()
-    h.update({"content-type": "application/json"})
-    if "variants" not in data:
-        res = requests.put(url, headers=h, json=data)
-        responses.append(res)
-    else:
-        variants = data.pop("variants")
-        res = requests.put(url, headers=h, json=data)
-        responses.append(res)
-        for variant_data in variants:
-            variant_url = url + f"/variants/{variant_data.pop('id')}"
-            res = requests.put(variant_url, headers=h, json=variant_data)
-            if slow:
-                time.sleep(1)
-            else:
-                time.sleep(0.1)
-            # don't return variant not found res in res array
-            # TODO: why tf not?
-            if res.status_code != 404:
-                responses.append(res)
-    return responses
-
-
-def get_all_brand_ids():
-    def get_brands(i=1):
-        url = base + "v3/catalog/brands" + f"?limit=50&page={i}"
-        res = requests.get(url, headers=headers)
-        return res
-
-    data = call_iteratively(get_brands)
-    return {d["id"]: d["name"] for d in data}
-
-
-def create_brand(name):
-    """returns brand ID upon creation"""
-    url = base + "v3/catalog/brands"
-    h = headers.copy()
-    h.update({"content-type": "application/json", "accept": "application/json"})
-    d = {"name": f"{name}"}
-    res = requests.post(url, headers=h, json=d)
-    if res.ok:
-        return res.json()["data"]["id"]
-
-
-def get_all_category_ids():
-    url = base + "v3/catalog/categories/tree"
-    res = requests.get(url, headers=headers)
-    cat = {}
-    for i in res.json()["data"]:
-        cat.update({i["id"]: i["name"]})
-        for j in i["children"]:
-            cat.update({j["id"]: i["name"] + "/" + j["name"]})
-            for k in j["children"]:
-                cat.update({k["id"]: i["name"] + "/" + j["name"] + "/" + k["name"]})
-    return cat
-
-
-def create_custom_field(product_id, key, value):
-    url = base + f"v3/catalog/products/{product_id}/custom-fields"
-    data = {
-        "name": key,
-        "value": str(value),
-    }
-    h = headers.copy()
-    h.update({"content-type": "application/json"})
-    res = requests.post(url, headers=h, json=data)
-    return res
-
-
-def get_custom_field_id(product_id, key):
-    url = base + f"v3/catalog/products/{product_id}/custom-fields"
-    h = headers.copy()
-    res = requests.get(url, headers=h)
-    fields = res.json()["data"]
-    for d in fields:
-        if d["name"] == key:
-            return d["id"]
-
-
-def update_custom_field(product_id, key, value):
-    cfid = get_custom_field_id(product_id, key)
-    if cfid:
-        url = base + f"v3/catalog/products/{product_id}/custom-fields/{cfid}"
-        data = {
-            "name": key,
-            "value": str(value),
-        }
-        h = headers.copy()
-        h.update({"accept": "application/json", "content-type": "application/json"})
-        res = requests.put(url, headers=h, json=data)
-        return res
-    else:
-        return create_custom_field(product_id, key, value)

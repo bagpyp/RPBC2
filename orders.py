@@ -175,12 +175,9 @@ def new_sls_orders(test=False):
 
 
 def get_orders(test=False):
-    # dropping sls orders due to contract change in their api
-    print("things are good")
     return sorted(
         new_sls_orders(test) + new_orders(test), key=lambda k: k["created_date"]
     )
-    # return sorted(new_orders(test), key = lambda k: k['created_date'])
 
 
 if __name__ == "__main__":

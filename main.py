@@ -4,8 +4,25 @@ Created on Mon Oct  5 10:29:51 2020
 
 @author: Bagpyp
 """
-from api import (
-    updated_products,
+import datetime as dt
+import re
+from time import sleep, gmtime
+
+import pandas as pd
+from numpy import where, nan
+from tqdm import tqdm
+
+from account import pull_invoices, pull_orders
+from maps import to_clearance_map, clearance_map, category_map, to_ebay_map
+from media import configureOptions, reshapeMedia, archiveMedia, fileDf
+from orders import get_orders
+from out import fromECM
+from payloads import product_update_payload, product_creation_payload
+from quivers import send_to_quivers
+from receipts import document
+from returns import get_returns
+from secret_info import is_nighttime, daysAgo
+from src.api import (
     delete_product,
     get_all_brand_ids,
     get_all_category_ids,
@@ -13,16 +30,11 @@ from api import (
     update_product,
     update_custom_field,
     create_product,
-    retry_request_using_response,
+    updated_products,
     get_product_by_sku,
     get_product_by_name,
 )
-from media import configureOptions, reshapeMedia, archiveMedia, fileDf
-from orders import get_orders
-from out import fromECM
-from payloads import product_update_payload, product_creation_payload
-from receipts import document
-from returns import get_returns
+from src.api.request_utils import retry_request_using_response
 
 # controls
 fast = False
@@ -73,19 +85,8 @@ amazon_excluded_vendors = [
     "Wolfgang",
 ]
 
-import datetime as dt
-
 a = dt.datetime.now()
 print("began ", a.ctime())
-from time import sleep, gmtime
-from maps import to_clearance_map, clearance_map, category_map, to_ebay_map
-from tqdm import tqdm
-from numpy import where, nan
-import pandas as pd
-import re
-from secret_info import is_nighttime, daysAgo
-from account import pull_invoices, pull_orders
-from quivers import send_to_quivers
 
 
 # %% ORDERS
@@ -116,8 +117,6 @@ else:
     df = fromECM()
 
 # %% TRANSFORM
-
-
 df = df[(~df.VC.isin(excluded_vendor_codes)) & (~df.DCS.isin(excluded_dcs_codes))]
 
 # nuke duplicate SKUs
@@ -198,7 +197,6 @@ df = configureOptions(df)
 
 
 # %%  JOIN AND MEDIATE
-
 
 df = df[
     [
@@ -367,38 +365,35 @@ gb = df.groupby("webName")
 
 new = gb.filter(lambda g: g.p_id.count() == 0).groupby("webName", sort=False)
 old = gb.filter(
-    lambda g: (g.lModified.max() > (dt.datetime.now() - dt.timedelta(days=daysAgo + 1)))
+    lambda g: (g.lModified.max() > (dt.datetime.now() - dt.timedelta(days=daysAgo)))
     & (g.p_id.count() == 1)
 ).groupby("webName", sort=False)
 
 
-# UPDATE
-updatables = []
+product_payloads_for_update = []
 for name, g in old:
     try:
-        updatables.append(product_update_payload(g))
-    except:
-        print("can't create upPayload for ", name)
+        product_payloads_for_update.append(product_update_payload(g))
+    except Exception:
+        print("couldn't create update payload for", name)
         continue
 
-creatables = []
-# sleep(1)
+product_payloads_for_creation = []
 for name, g in new:
     try:
-        creatables.append(product_creation_payload(g))
-    except:
-        print("can't create newPayload for ", name)
+        product_payloads_for_creation.append(product_creation_payload(g))
+    except Exception:
+        print("couldn't create creation payload for", name)
         continue
 
 # %% UPDATE
 
 updated = []
 failed_to_update = []
-
-if len(updatables) > 0:
-    print(f"updating {len(updatables)} products...")
+if len(product_payloads_for_update) > 0:
+    print(f"updating {len(product_payloads_for_update)} products...")
     sleep(1)
-    for i, u in tqdm(enumerate(updatables)):
+    for i, u in tqdm(enumerate(product_payloads_for_update)):
         uid = u.pop("id")
 
         res = update_product(uid, u)
@@ -428,91 +423,86 @@ if len(updatables) > 0:
 
 created = []
 failed_to_create = []
-
-if len(creatables) > 0:
-    print(f"creating {len(creatables)} products...")
+if len(product_payloads_for_creation) > 0:
+    print(f"creating {len(product_payloads_for_creation)} products...")
     sleep(1)
 
-for i, c in tqdm(enumerate(creatables)):
-    try:
-        res = create_product(c)
-        if not res.ok:
-            if res.reason == "Too Many Requests" or res.status_code == 429:
-                try:
-                    sleep(int(res.headers["X-Rate-Limit-Time-Reset-Ms"]) / 1000)
-                except KeyError:
-                    sleep(int(res.headers["X-Rate-Limit-Time-Reset-Ms".lower()]) / 1000)
-                    res = retry_request_using_response(res)
-            if res.reason == "Conflict":
-                if "product sku is a duplicate" in res.text:
-                    conflict_sku = c["sku"]
-                    conflict_products = get_product_by_sku(conflict_sku).json()["data"]
-                    for cp in conflict_products:
-                        delete_product(cp["id"])
-                    res = retry_request_using_response(res)
-                elif "product name is a duplicate" in res.text:
-                    conflict_name = c["name"]
-                    conflict_products = get_product_by_name(conflict_name).json()[
-                        "data"
+for i, c in tqdm(enumerate(product_payloads_for_creation)):
+    res = create_product(c)
+    if not res.ok:
+        if res.reason == "Too Many Requests" or res.status_code == 429:
+            try:
+                sleep(int(res.headers["X-Rate-Limit-Time-Reset-Ms"]) / 1000)
+            except KeyError:
+                sleep(int(res.headers["X-Rate-Limit-Time-Reset-Ms".lower()]) / 1000)
+                res = retry_request_using_response(res)
+        if res.reason == "Conflict":
+            if "product sku is a duplicate" in res.text:
+                conflict_sku = c["sku"]
+                conflict_products = get_product_by_sku(conflict_sku).json()["data"]
+                for cp in conflict_products:
+                    delete_product(cp["id"])
+                res = retry_request_using_response(res)
+            if "product name is a duplicate" in res.text:
+                conflict_name = c["name"]
+                conflict_products = get_product_by_name(conflict_name).json()["data"]
+                for cp in conflict_products:
+                    delete_product(cp["id"])
+                res = retry_request_using_response(res)
+        if (
+            "could not be processed and may not be valid image" in res.text
+            or "could not be downloaded and may be invalid"
+        ):
+            broken_image_urls = []
+            if "images" in c:
+                ims = c.pop("images")
+                for im in ims:
+                    if "image_url" in im:
+                        broken_image_urls.append(im["image_url"])
+            if "variants" in c:
+                for v in c["variants"]:
+                    if "image_url" in v:
+                        im = v.pop("image_url")
+                        broken_image_urls.append(im)
+            bad_image_skus = list(
+                set(
+                    [
+                        re.search(r"(\d-\d{5,6}_?\d?)", url).group(1).split("_")[0]
+                        for url in broken_image_urls
+                        if re.search(r"\d-\d{5,6}_?\d?", url)
                     ]
-                    for cp in conflict_products:
-                        delete_product(cp["id"])
-                    res = retry_request_using_response(res)
-            if (
-                "could not be processed and may not be valid image" in res.text
-                or "could not be downloaded and may be invalid"
-            ):
-                broken_image_urls = []
-                if "images" in c:
-                    ims = c.pop("images")
-                    for im in ims:
-                        if "image_url" in im:
-                            broken_image_urls.append(im["image_url"])
-                if "variants" in c:
-                    for v in c["variants"]:
-                        if "image_url" in v:
-                            im = v.pop("image_url")
-                            broken_image_urls.append(im)
-                bad_image_skus = list(
-                    set(
-                        [
-                            re.search(r"(\d-\d{5,6}_?\d?)", url).group(1).split("_")[0]
-                            for url in broken_image_urls
-                            if re.search(r"\d-\d{5,6}_?\d?", url)
-                        ]
-                    )
                 )
-                mdf.loc[bad_image_skus, mdf.columns != "description"] = nan
-                mdf.to_pickle("data/media.pkl")
-                c["is_visible"] = False
-                res = create_product(c)
-        if res.ok:
-            created.append(res)
-            j = res.json()["data"]
-            p_id = str(j["id"])
-            # add custom fields
-            update_custom_field(p_id, "eBay Sale Price", c["amazon_price"])
-            if c["list_on_amazon"]:
-                update_custom_field(p_id, "Amazon Status", "Enabled")
-            else:
-                update_custom_field(p_id, "Amazon Status", "Disabled")
-            cat = str(j["categories"][0])
-            sale_price = str(j["sale_price"])
-            if cat in to_ebay_map:
-                update_custom_field(p_id, "eBay Category ID", cat)
-            else:
-                update_custom_field(p_id, "eBay Category ID", "0")
-
+            )
+            mdf.loc[bad_image_skus, mdf.columns != "description"] = nan
+            mdf.to_pickle("data/media.pkl")
+            c["is_visible"] = False
+            res = create_product(c)
+    # res had been written over many times potentially,
+    # which is why this is not an `elif` paired with the `if` above
+    if res.ok:
+        created.append(res)
+        j = res.json()["data"]
+        p_id = str(j["id"])
+        # add custom fields
+        update_custom_field(p_id, "eBay Sale Price", c["amazon_price"])
+        if c["list_on_amazon"]:
+            update_custom_field(p_id, "Amazon Status", "Enabled")
         else:
-            failed_to_create.append(res)
+            update_custom_field(p_id, "Amazon Status", "Disabled")
+        cat = str(j["categories"][0])
+        sale_price = str(j["sale_price"])
+        if cat in to_ebay_map:
+            update_custom_field(p_id, "eBay Category ID", cat)
+        else:
+            update_custom_field(p_id, "eBay Category ID", "0")
 
-    except Exception:
-        continue
+    else:
+        failed_to_create.append(res)
 
-# %%
-print("runtime: ", dt.datetime.now() - a)
 
 send_to_quivers()
+
+print("runtime: ", dt.datetime.now() - a)
 
 if is_nighttime:
     pull_invoices()
