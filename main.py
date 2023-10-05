@@ -12,7 +12,6 @@ import pandas as pd
 from numpy import where, nan
 from tqdm import tqdm
 
-from account import pull_invoices, pull_orders
 from maps import to_clearance_map, clearance_map, category_map, to_ebay_map
 from media import configureOptions, reshapeMedia, archiveMedia, fileDf
 from orders import get_orders
@@ -503,7 +502,3 @@ for i, c in tqdm(enumerate(product_payloads_for_creation)):
 send_to_quivers()
 
 print("runtime: ", dt.datetime.now() - a)
-
-if is_nighttime:
-    pull_invoices()
-    pull_orders()
