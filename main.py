@@ -20,7 +20,7 @@ from payloads import product_update_payload, product_creation_payload
 from quivers import send_to_quivers
 from receipts import document
 from returns import get_returns
-from secret_info import is_nighttime, daysAgo
+from secret_info import daysAgo
 from src.api import (
     delete_product,
     get_all_brand_ids,
