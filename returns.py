@@ -5,20 +5,18 @@ from secret_info import base, headers, sls_base, sls_headers
 import datetime as dt
 
 
-def new_returns(test=False, all=False):
+def new_returns():
     print("pulling returns from BigCommerce...")
 
     def all_orders():
         orders = []
 
-        def get_orders(stastus_id, i):
+        def get_orders(status_id, i):
             url = base + f"v2/orders?status_id={status_id}" + f"&limit=50&page={i}"
             res = requests.get(url, headers=headers)
             return res
 
         status_ids = [4, 5]
-        if all:
-            status_ids += [2, 7, 9, 10, 11, 12]
         for status_id in status_ids:
             n = 1
             while get_orders(status_id, i=n).text:
@@ -27,14 +25,9 @@ def new_returns(test=False, all=False):
                 n += 1
         return orders
 
-    # PULL ORDERS (NO RETURNS)
+    # PULL ORDERS
     orders = sorted(all_orders(), key=lambda k: int(k["id"]))
-    # test
-    # return orders
-    if test:
-        # create mock archive by sending all but last 30 to json file
-        with open("data/bc_returns.json", "w") as file:
-            json.dump([], file)
+
     with open("data/bc_returns.json") as file:
         # SOME OF THESE MIGHT NOW BE RETURNS, AND NOT IN `orders`
         try:
@@ -98,23 +91,22 @@ def new_returns(test=False, all=False):
         order["total_amt"] = round(float(no["total_inc_tax"]), 2)
         order["status"] = no["status"]
         products = []
-        if test == False:
-            for p in no["products"]:
-                product = {
-                    "sku": p["sku"],
-                    "qty": int(p["quantity"]),
-                    "amt_per": round(float(p["price_inc_tax"]), 2),
-                    "amt_total": round(float(p["total_inc_tax"]), 2),
-                }
-                products.append(product)
-            order["products"] = products
+
+        for p in no["products"]:
+            product = {
+                "sku": p["sku"],
+                "qty": int(p["quantity"]),
+                "amt_per": round(float(p["price_inc_tax"]), 2),
+                "amt_total": round(float(p["total_inc_tax"]), 2),
+            }
+            products.append(product)
+        order["products"] = products
+
         orders.append(order)
     return orders
 
 
-def new_sls_returns(test=False, all=False):
-    print("Checking SidelineSwap...")
-
+def new_sls_returns():
     def sls_returns():
         i = 1
         url = sls_base + "orders"
@@ -128,9 +120,7 @@ def new_sls_returns(test=False, all=False):
         return data
 
     orders = sorted(sls_returns(), key=lambda k: k["created_at"])
-    if test:
-        with open("data/sls_returns.json", "w") as file:
-            json.dump([], file)
+
     with open("data/sls_returns.json") as file:
         archive = json.load(file)
     archived_ids = [o["order_id"] for o in archive]
@@ -167,19 +157,12 @@ def new_sls_returns(test=False, all=False):
         else:
             order["status"] = "NO STATUS"
         orders.append(order)
-        statuses = ["Cancelled"]
-    if all:
-        statuses += ["Delivered", "Pending_shipment", "NO STATUS"]
+
+    statuses = ["Cancelled"]
     return [o for o in orders if o["status"].lower() in [s.lower() for s in statuses]]
 
 
-def get_returns(test=False):
+def get_returns():
     return sorted(
-        new_returns(test) + new_sls_returns(test), key=lambda k: k["created_date"]
+        new_returns() + new_sls_returns(), key=lambda k: k["created_date"]
     )
-
-
-# if __name__ == '__main__':
-#     with open('accounting/allReturns.json','w') as outfile:
-#         returns = get_returns(test=True)
-#         json.dump(returns,outfile)

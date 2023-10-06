@@ -5,7 +5,7 @@ from secret_info import base, headers, sls_base, sls_headers
 import datetime as dt
 
 
-def new_orders(test=False):
+def new_orders():
     print("pulling new orders from BigCommerce...")
 
     def all_orders():
@@ -17,8 +17,6 @@ def new_orders(test=False):
             return res
 
         status_ids = [2, 7, 9, 10, 11, 12]
-        if test:
-            status_ids += [4, 5]
         for status_id in status_ids:
             n = 1
             while get_orders(status_id, i=n).text:
@@ -29,12 +27,7 @@ def new_orders(test=False):
 
     # PULL ORDERS (NO RETURNS)
     orders = sorted(all_orders(), key=lambda k: int(k["id"]))
-    # test
-    # return orders
-    if test:
-        # create mock archive by sending all but last 30 to json file
-        with open("data/bc_orders.json", "w") as file:
-            json.dump([], file)
+
     with open("data/bc_orders.json") as file:
         # SOME OF THESE MIGHT NOW BE RETURNS, AND NOT IN `orders`
         try:
@@ -98,23 +91,22 @@ def new_orders(test=False):
         order["total_amt"] = round(float(no["total_ex_tax"]), 2)
         order["status"] = no["status"]
         products = []
-        if test == False:
-            for p in no["products"]:
-                product = {
-                    "sku": p["sku"],
-                    "qty": int(p["quantity"]),
-                    "amt_per": round(float(p["price_ex_tax"]), 2),
-                    "amt_total": round(float(p["total_ex_tax"]), 2),
-                }
-                products.append(product)
-            order["products"] = products
+
+        for p in no["products"]:
+            product = {
+                "sku": p["sku"],
+                "qty": int(p["quantity"]),
+                "amt_per": round(float(p["price_ex_tax"]), 2),
+                "amt_total": round(float(p["total_ex_tax"]), 2),
+            }
+            products.append(product)
+        order["products"] = products
+
         orders.append(order)
     return orders
 
 
-def new_sls_orders(test=False):
-    print("Checking SidelineSap...")
-
+def new_sls_orders():
     def sls_orders():
         i = 1
         url = sls_base + "orders"
@@ -128,9 +120,7 @@ def new_sls_orders(test=False):
         return data
 
     orders = sorted(sls_orders(), key=lambda k: k["created_at"])
-    if test:
-        with open("data/sls_orders.json", "w") as file:
-            json.dump([], file)
+
     with open("data/sls_orders.json") as file:
         archive = json.load(file)
     archived_ids = [o["order_id"] for o in archive]
@@ -167,18 +157,12 @@ def new_sls_orders(test=False):
         else:
             order["status"] = "NO STATUS"
         orders.append(order)
-    if test:
-        statuses = ["Pending_shipment", "Shipped", "Delivered", "NO STATUS"]
-    else:
-        statuses = ["Pending_shipment", "Shipped", "Delivered"]
+
+    statuses = ["Pending_shipment", "Shipped", "Delivered"]
     return [o for o in orders if o["status"].lower() in [s.lower() for s in statuses]]
 
 
-def get_orders(test=False):
+def get_orders():
     return sorted(
-        new_sls_orders(test) + new_orders(test), key=lambda k: k["created_date"]
+        new_sls_orders() + new_orders(), key=lambda k: k["created_date"]
     )
-
-
-if __name__ == "__main__":
-    get_orders()
