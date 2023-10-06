@@ -29,4 +29,3 @@ def update_product(id_, data, slow=False):
             if res.status_code != 404:
                 responses.append(res)
     return responses
-

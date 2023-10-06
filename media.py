@@ -1,9 +1,10 @@
+import time
 from glob import glob
-from numpy import nan
+
 import pandas as pd
 import requests
-import time
 import tqdm
+from numpy import nan
 
 
 # redefine product data model topology

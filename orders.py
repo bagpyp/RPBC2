@@ -1,8 +1,10 @@
+import datetime as dt
 import json
 from json import JSONDecodeError
+
 import requests
+
 from secret_info import base, headers, sls_base, sls_headers
-import datetime as dt
 
 
 def _get_orders(status_id, i):
@@ -11,12 +13,12 @@ def _get_orders(status_id, i):
     return res
 
 
-def new_orders(kind='orders'):
+def new_orders(kind="orders"):
     print(f"pulling new {kind} from BigCommerce...")
     status_ids = []
-    if kind == 'orders':
+    if kind == "orders":
         status_ids = [2, 7, 9, 10, 11, 12]
-    elif kind == 'returns':
+    elif kind == "returns":
         status_ids = [4, 5]
 
     orders = []
@@ -106,8 +108,7 @@ def new_orders(kind='orders'):
     return orders
 
 
-def new_sls_orders(kind='orders'):
-
+def new_sls_orders(kind="orders"):
     i = 1
     url = sls_base + "orders"
     res = requests.get(url, headers=sls_headers).json()
@@ -158,22 +159,19 @@ def new_sls_orders(kind='orders'):
         orders.append(order)
 
     statuses = []
-    if kind == 'orders':
+    if kind == "orders":
         statuses = ["Pending_shipment", "Shipped", "Delivered"]
-    elif kind == 'returns':
+    elif kind == "returns":
         statuses = ["Cancelled"]
     return [o for o in orders if o["status"].lower() in [s.lower() for s in statuses]]
 
 
 def get_all_orders():
-    return sorted(
-        new_sls_orders() + new_orders(),
-        key=lambda k: k["created_date"]
-    )
+    return sorted(new_sls_orders() + new_orders(), key=lambda k: k["created_date"])
 
 
 def get_all_returns():
     return sorted(
-        new_sls_orders(kind='returns') + new_orders(kind='returns'),
-        key=lambda k: k["created_date"]
+        new_sls_orders(kind="returns") + new_orders(kind="returns"),
+        key=lambda k: k["created_date"],
     )

@@ -1,17 +1,14 @@
-from secret_info import stid, drive
-import xml.etree.ElementTree as ET
-import xml.dom.minidom as md
-import os
 import datetime as dt
 import json
+import os
 import time
-from maps import customer_data, prefix_map, assoc_map
-
-
+import xml.dom.minidom as md
+import xml.etree.ElementTree as ET
 
 import pandas as pd
 
-
+from maps import customer_data, prefix_map, assoc_map
+from secret_info import stid, drive
 
 
 # %%
@@ -157,7 +154,9 @@ def items(order, ecm_data):
     for i, product in enumerate(order["products"]):
         sku = product["sku"].split("-")[1].lstrip("0")
         try:
-            record = ecm_data.fillna("").astype(str)[ecm_data.sku == sku].iloc[0].to_dict()
+            record = (
+                ecm_data.fillna("").astype(str)[ecm_data.sku == sku].iloc[0].to_dict()
+            )
         except IndexError:
             print(f"item with sku {sku} does not exist in Retail Pro.")
             continue
@@ -183,7 +182,9 @@ def base_items(order, ecm_data):
     for product in order["products"]:
         sku = product["sku"].split("-")[1].lstrip("0")
         try:
-            record = ecm_data.fillna("").astype(str)[ecm_data.sku == sku].iloc[0].to_dict()
+            record = (
+                ecm_data.fillna("").astype(str)[ecm_data.sku == sku].iloc[0].to_dict()
+            )
         except IndexError:
             continue
         base_item = {
@@ -223,7 +224,9 @@ class Invoice:
         ]
         self.invc_items = [
             {"invc_item": i, "invc_base_item": b}
-            for i, b in zip(*(items(order, self.ecm_data), base_items(order, self.ecm_data)))
+            for i, b in zip(
+                *(items(order, self.ecm_data), base_items(order, self.ecm_data))
+            )
         ]
 
     def to_xml(self):
@@ -249,8 +252,6 @@ class Invoice:
 
 
 def document(orders, ecm=True, drive=drive, stid=f"{stid}", regular=True):
-
-
     order_counts = {}
     for api_source in ["sls", "bc"]:
         with open(f"data/{api_source}_orders.json") as f:
@@ -260,7 +261,6 @@ def document(orders, ecm=True, drive=drive, stid=f"{stid}", regular=True):
     for api_source in ["sls", "bc"]:
         with open(f"data/{api_source}_returns.json") as f:
             return_counts[api_source] = len(json.load(f))
-
 
     if orders == []:
         print(

@@ -1,10 +1,10 @@
-import pandas as pd
-
-
 import datetime as dt
-from secret_info import qftp
-import paramiko
 import os
+
+import pandas as pd
+import paramiko
+
+from secret_info import qftp
 
 brands = [
     "Marker USA",

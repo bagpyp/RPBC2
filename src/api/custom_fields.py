@@ -39,4 +39,3 @@ def update_custom_field(product_id, key, value):
         return res
     else:
         return _create_custom_field(product_id, key, value)
-

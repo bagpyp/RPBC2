@@ -9,4 +9,3 @@ def create_product(data):
     h.update({"content-type": "application/json"})
     res = requests.post(url, headers=h, json=data)
     return res
-

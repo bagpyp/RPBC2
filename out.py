@@ -1,12 +1,13 @@
-from glob import glob
-from numpy import nan
 import os
-import pandas as pd
-from secret_info import stid, drive
 import time
-import tqdm
-
 import xml.etree.ElementTree as ET
+from glob import glob
+
+import pandas as pd
+import tqdm
+from numpy import nan
+
+from secret_info import stid, drive
 
 
 # ecm out
@@ -16,7 +17,7 @@ def fromECM(run=True, ecm=True, drive=drive, stid=stid):
     if ecm:
         # procout
         os.system(f"{drive}:\\ECM\\ecmproc -out -a -stid:{stid}")
-    # parse invtentory cml files and build a list of 'items'
+    # parse inventory cml files and build a list of 'items'
     if run:
         invns = []
         for file in glob(rf"{drive}:\ECM\Polling\{stid}\OUT\Inventory*"):

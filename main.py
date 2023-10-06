@@ -31,9 +31,8 @@ from src.api import (
     updated_products,
     get_product_by_sku,
     get_product_by_name,
-    retry_request_using_response
+    retry_request_using_response,
 )
-
 
 fast = False
 clearanceIsOn = False
@@ -89,7 +88,6 @@ print("began ", a.ctime())
 # %% ORDERS AND RETURNS
 
 if not fast:
-
     new_orders = get_all_orders()
     document(new_orders)
 
@@ -100,7 +98,7 @@ if not fast:
             ret
             for ret in new_returns
             if str(ret.get("id"))
-               in w.comment1.apply(lambda x: x.split(" ")[1]).tolist()
+            in w.comment1.apply(lambda x: x.split(" ")[1]).tolist()
         ],
         regular=False,
     )
@@ -187,11 +185,9 @@ for i in range(1, len(chart)):
         j += 1
 df.webName = df.ssid.map(chart.webName.to_dict())
 
-
 # %%  PRODUCT OPTIONS
 
 df = configureOptions(df)
-
 
 # %%  JOIN AND MEDIATE
 
@@ -366,7 +362,6 @@ old = gb.filter(
     & (g.p_id.count() == 1)
 ).groupby("webName", sort=False)
 
-
 product_payloads_for_update = []
 for name, g in old:
     try:
@@ -495,7 +490,6 @@ for i, c in tqdm(enumerate(product_payloads_for_creation)):
 
     else:
         failed_to_create.append(res)
-
 
 send_to_quivers()
 
