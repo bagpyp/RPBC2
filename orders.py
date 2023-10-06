@@ -5,35 +5,35 @@ from secret_info import base, headers, sls_base, sls_headers
 import datetime as dt
 
 
-def new_orders():
-    print("pulling new orders from BigCommerce...")
+def _get_orders(status_id, i):
+    url = base + f"v2/orders?status_id={status_id}" + f"&limit=50&page={i}"
+    res = requests.get(url, headers=headers)
+    return res
 
-    def all_orders():
-        orders = []
 
-        def get_orders(status_id, i):
-            url = base + f"v2/orders?status_id={status_id}" + f"&limit=50&page={i}"
-            res = requests.get(url, headers=headers)
-            return res
-
+def new_orders(kind='orders'):
+    print(f"pulling new {kind} from BigCommerce...")
+    status_ids = []
+    if kind == 'orders':
         status_ids = [2, 7, 9, 10, 11, 12]
-        for status_id in status_ids:
-            n = 1
-            while get_orders(status_id, i=n).text:
-                nthOrders = get_orders(status_id, i=n).json()
-                orders.extend(nthOrders)
-                n += 1
-        return orders
+    elif kind == 'returns':
+        status_ids = [4, 5]
 
-    # PULL ORDERS (NO RETURNS)
-    orders = sorted(all_orders(), key=lambda k: int(k["id"]))
+    orders = []
+    for status_id in status_ids:
+        n = 1
+        while _get_orders(status_id, i=n).text:
+            nth_orders = _get_orders(status_id, i=n).json()
+            orders.extend(nth_orders)
+            n += 1
+    orders = sorted(orders, key=lambda k: int(k["id"]))
 
-    with open("data/bc_orders.json") as file:
+    with open(f"data/bc_{kind}.json") as file:
         # SOME OF THESE MIGHT NOW BE RETURNS, AND NOT IN `orders`
         try:
             archive = json.load(file)
         except JSONDecodeError:
-            with open("data/bc_orders.json", "w") as file:
+            with open(f"data/bc_{kind}.json", "w") as file:
                 json.dump(orders, file)
             archive = orders
     archived_ids = [o["id"] for o in archive]
@@ -41,7 +41,7 @@ def new_orders():
     new_orders = [o for o in orders if o["id"] not in archived_ids]
     # either there are some orders, or not!
     if new_orders:
-        with open("data/bc_orders.json", "w") as file:
+        with open(f"data/bc_{kind}.json", "w") as file:
             # HERE WE NEED A UNION OF BOTH 'orders' AND 'archive'
             # NOT JUST `orders`
             json.dump(archive + new_orders, file)
@@ -106,27 +106,26 @@ def new_orders():
     return orders
 
 
-def new_sls_orders():
-    def sls_orders():
-        i = 1
-        url = sls_base + "orders"
-        res = requests.get(url, headers=sls_headers).json()
-        data = res["data"]
-        while res["meta"]["has_next"]:
-            i += 1
-            res = requests.get(url + f"?page={i}", headers=sls_headers)
-            res = res.json()
-            data.extend(res["data"])
-        return data
+def new_sls_orders(kind='orders'):
 
-    orders = sorted(sls_orders(), key=lambda k: k["created_at"])
+    i = 1
+    url = sls_base + "orders"
+    res = requests.get(url, headers=sls_headers).json()
+    sls_orders = res["data"]
+    while res["meta"]["has_next"]:
+        i += 1
+        res = requests.get(url + f"?page={i}", headers=sls_headers)
+        res = res.json()
+        sls_orders.extend(res["data"])
 
-    with open("data/sls_orders.json") as file:
+    orders = sorted(sls_orders, key=lambda k: k["created_at"])
+
+    with open(f"data/sls_{kind}.json") as file:
         archive = json.load(file)
     archived_ids = [o["order_id"] for o in archive]
     new_orders = [o for o in orders if o["order_id"] not in archived_ids]
     if new_orders:
-        with open("data/sls_orders.json", "w") as file:
+        with open(f"data/sls_{kind}.json", "w") as file:
             json.dump(archive + new_orders, file)
     # return new_orders
     orders = []
@@ -158,11 +157,23 @@ def new_sls_orders():
             order["status"] = "NO STATUS"
         orders.append(order)
 
-    statuses = ["Pending_shipment", "Shipped", "Delivered"]
+    statuses = []
+    if kind == 'orders':
+        statuses = ["Pending_shipment", "Shipped", "Delivered"]
+    elif kind == 'returns':
+        statuses = ["Cancelled"]
     return [o for o in orders if o["status"].lower() in [s.lower() for s in statuses]]
 
 
-def get_orders():
+def get_all_orders():
     return sorted(
-        new_sls_orders() + new_orders(), key=lambda k: k["created_date"]
+        new_sls_orders() + new_orders(),
+        key=lambda k: k["created_date"]
+    )
+
+
+def get_all_returns():
+    return sorted(
+        new_sls_orders(kind='returns') + new_orders(kind='returns'),
+        key=lambda k: k["created_date"]
     )

@@ -14,12 +14,11 @@ from tqdm import tqdm
 
 from maps import to_clearance_map, clearance_map, category_map, to_ebay_map
 from media import configureOptions, reshapeMedia, archiveMedia, fileDf
-from orders import get_orders
+from orders import get_all_orders, get_all_returns
 from out import fromECM
 from payloads import product_update_payload, product_creation_payload
 from quivers import send_to_quivers
 from receipts import document
-from returns import get_returns
 from secret_info import daysAgo
 from src.api import (
     delete_product,
@@ -35,7 +34,7 @@ from src.api import (
     retry_request_using_response
 )
 
-# controls
+
 fast = False
 clearanceIsOn = False
 excluded_vendor_codes = []
@@ -87,22 +86,21 @@ amazon_excluded_vendors = [
 a = dt.datetime.now()
 print("began ", a.ctime())
 
+# %% ORDERS AND RETURNS
 
-# %% ORDERS
 if not fast:
-    new_orders = get_orders()
+
+    new_orders = get_all_orders()
     document(new_orders)
 
-    # %% RETURNS
-
     w = pd.read_csv("invoices/written.csv")
-    new_returns = get_returns()
+    new_returns = get_all_returns()
     document(
         [
             ret
             for ret in new_returns
             if str(ret.get("id"))
-            in w.comment1.apply(lambda x: x.split(" ")[1]).tolist()
+               in w.comment1.apply(lambda x: x.split(" ")[1]).tolist()
         ],
         regular=False,
     )
