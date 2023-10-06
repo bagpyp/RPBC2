@@ -31,7 +31,7 @@ from src.api import (
     updated_products,
     get_product_by_sku,
     get_product_by_name,
-    retry_request_using_response
+    retry_request_using_response,
 )
 
 
@@ -89,7 +89,6 @@ print("began ", a.ctime())
 # %% ORDERS AND RETURNS
 
 if not fast:
-
     new_orders = get_all_orders()
     document(new_orders)
 
@@ -100,7 +99,7 @@ if not fast:
             ret
             for ret in new_returns
             if str(ret.get("id"))
-               in w.comment1.apply(lambda x: x.split(" ")[1]).tolist()
+            in w.comment1.apply(lambda x: x.split(" ")[1]).tolist()
         ],
         regular=False,
     )
@@ -500,3 +499,6 @@ for i, c in tqdm(enumerate(product_payloads_for_creation)):
 send_to_quivers()
 
 print("runtime: ", dt.datetime.now() - a)
+
+
+debug = True
