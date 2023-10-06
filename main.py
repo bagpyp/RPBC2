@@ -32,8 +32,8 @@ from src.api import (
     updated_products,
     get_product_by_sku,
     get_product_by_name,
+    retry_request_using_response
 )
-from src.api.request_utils import retry_request_using_response
 
 # controls
 fast = False
