@@ -73,14 +73,16 @@ pdf.loc[:, "p_id"] = pdf.p_id.astype(int)
 custom_fields = pdf.set_index("p_id").amazon_status.to_dict()
 
 if __name__ == "__main__":
+    print("Flooding products in BigCommerce with Amazon Status custom field...")
     pdf = pd.read_pickle(f"{DATA_DIR}/products.pkl")
     pdf_changed = False
     for p_id, amazon_status in tqdm(custom_fields.items()):
         res = update_custom_field(p_id, "Amazon Status", amazon_status)
         if not res.ok:
             if "A product was not found with an id of " in res.text:
+                print(f"Removing product with id {p_id} from `products.pkl`")
                 pdf = pdf[pdf.p_id != p_id]
                 pdf_changed = True
     if pdf_changed:
-        print("committing pdf changes to products.pkl")
+        print("Committing pdf changes to products.pkl")
         pdf.to_pickle(f"{DATA_DIR}/products.pkl")

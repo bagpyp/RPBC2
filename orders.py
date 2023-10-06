@@ -15,7 +15,7 @@ def _get_orders(status_id, i):
 
 
 def new_orders(kind="orders"):
-    print(f"pulling new {kind} from BigCommerce...")
+    print(f"Pulling new {kind} from BigCommerce...")
     status_ids = []
     if kind == "orders":
         status_ids = [2, 7, 9, 10, 11, 12]

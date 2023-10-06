@@ -45,9 +45,3 @@ def send_to_quivers():
             sftp.put(fname, fname)
 
     os.remove(fname)
-
-
-if __name__ == "__main__":
-    print("sending to quivers...")
-    send_to_quivers()
-    print("sent.")

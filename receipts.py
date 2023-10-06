@@ -159,7 +159,7 @@ def items(order, ecm_data):
                 ecm_data.fillna("").astype(str)[ecm_data.sku == sku].iloc[0].to_dict()
             )
         except IndexError:
-            print(f"item with sku {sku} does not exist in Retail Pro.")
+            # this would mean that the item with sku "sku" does not exist in Retail Pro
             continue
         item = {
             "item_pos": str(i + 1),
@@ -253,6 +253,7 @@ class Invoice:
 
 
 def document(orders, ecm=True, drive=drive, stid=f"{stid}", regular=True):
+    kind = "orders" if regular else "returns"
     order_counts = {}
     for api_source in ["sls", "bc"]:
         with open(f"{DATA_DIR}/{api_source}_orders.json") as f:
@@ -263,11 +264,8 @@ def document(orders, ecm=True, drive=drive, stid=f"{stid}", regular=True):
         with open(f"{DATA_DIR}/{api_source}_returns.json") as f:
             return_counts[api_source] = len(json.load(f))
 
-    if orders == []:
-        print(
-            "no new orders found on bigcommerce, make sure completed orders are marked `Completed` in orders page of admin panel"
-        )
-    else:
+    if orders:
+        print(f"Found {len(orders)} {kind} online")
         header = f'<?xml version="1.0" encoding="UTF-8"?>\n<!-- Created on {time.strftime("%Y-%m-%dT%H:%M:%S")}-08:00 -->\n<!-- V9 STATION -->\n<DOCUMENT>\n<INVOICES>'
         footer = "</INVOICES>\n</DOCUMENT>"
         if regular:
@@ -320,8 +318,6 @@ def document(orders, ecm=True, drive=drive, stid=f"{stid}", regular=True):
                     )
                     + footer
                 )
-            print("receipts building in Retail Pro...")
-            time.sleep(1)
             os.system(f"{drive}:\\ECM\\ecmproc -a -in -stid:{stid}")
 
         else:

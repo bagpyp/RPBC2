@@ -1,10 +1,8 @@
 import os
-import time
 import xml.etree.ElementTree as ET
 from glob import glob
 
 import pandas as pd
-import tqdm
 from numpy import nan
 
 from secret_info import stid, drive
@@ -27,9 +25,8 @@ def fromECM(run=True, ecm=True, drive=drive, stid=stid):
 
         # turn each item into a dicitonary
         inventorys = []
-        print("converting XMLs to DataFrame...")
-        time.sleep(1)
-        for invn in tqdm.tqdm(invns):
+
+        for invn in invns:
             inventory = {}
             for i in invn:
                 inventory.update(i.attrib)

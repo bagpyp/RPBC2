@@ -84,7 +84,7 @@ amazon_excluded_vendors = [
 ]
 
 a = dt.datetime.now()
-print("began ", a.ctime())
+print(f"Began {a}, processing changes in RetailPro over the last {daysAgo} days...")
 
 # %% ORDERS AND RETURNS
 
@@ -105,11 +105,11 @@ if not fast:
     )
 
 # %% ECM
-print("pulling data from ECM")
 
 if fast:
     df = fromECM(run=False, ecm=False)
 else:
+    print("Pulling data from ECM on the server via PROC OUT")
     df = fromECM()
 
 # %% TRANSFORM
@@ -253,11 +253,10 @@ df = pd.merge(df, pdf, how="left", left_on="sku", right_on="v_sku").replace("", 
 
 # reshape and archive images and descriptions
 
-print("reshaping media...")
-sleep(1)
+
 df = reshapeMedia(df)
 
-print("archiving media...")
+print("Archiving new images from BigCommerce")
 sleep(1)
 # nuke duplicate SKUs
 df = df[~df.sku.duplicated(keep=False)]
@@ -368,7 +367,7 @@ for name, g in old:
     try:
         product_payloads_for_update.append(product_update_payload(g))
     except Exception:
-        print("couldn't create update payload for", name)
+        print("Couldn't create update payload for", name)
         continue
 
 product_payloads_for_creation = []
@@ -376,7 +375,7 @@ for name, g in new:
     try:
         product_payloads_for_creation.append(product_creation_payload(g))
     except Exception:
-        print("couldn't create creation payload for", name)
+        print("Couldn't create creation payload for", name)
         continue
 
 # %% UPDATE
@@ -384,7 +383,7 @@ for name, g in new:
 updated = []
 failed_to_update = []
 if len(product_payloads_for_update) > 0:
-    print(f"updating {len(product_payloads_for_update)} products...")
+    print(f"Updating {len(product_payloads_for_update)} products in BigCommerce...")
     sleep(1)
     for i, u in tqdm(enumerate(product_payloads_for_update)):
         uid = u.pop("id")
@@ -417,7 +416,7 @@ if len(product_payloads_for_update) > 0:
 created = []
 failed_to_create = []
 if len(product_payloads_for_creation) > 0:
-    print(f"creating {len(product_payloads_for_creation)} products...")
+    print(f"Creating {len(product_payloads_for_creation)} products in BigCommerce...")
     sleep(1)
 
 for i, c in tqdm(enumerate(product_payloads_for_creation)):
@@ -494,7 +493,6 @@ for i, c in tqdm(enumerate(product_payloads_for_creation)):
 
 send_to_quivers()
 
-print("runtime: ", dt.datetime.now() - a)
-
+print("Runtime:", dt.datetime.now() - a)
 
 debug = True

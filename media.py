@@ -1,9 +1,7 @@
-import time
 from glob import glob
 
 import pandas as pd
 import requests
-import tqdm
 from numpy import nan
 
 from util.path_utils import DATA_DIR, IMAGES_DIR
@@ -60,10 +58,8 @@ def lift(g):
 
 
 def configureOptions(df):
-    print("configuring product options...")
-    time.sleep(0.69)
     gb = df.reset_index().groupby("webName", sort=False)
-    optionDf = pd.concat([lift(g) for _, g in tqdm.tqdm(gb)]).reset_index()
+    optionDf = pd.concat([lift(g) for _, g in gb]).reset_index()
     return optionDf
 
 
@@ -101,7 +97,7 @@ def mediate(g):
 
 def reshapeMedia(df):
     gb = df.groupby("webName", sort=False)
-    gs = [mediate(g) for _, g in tqdm.tqdm(gb)]
+    gs = [mediate(g) for _, g in gb]
     mdf = pd.concat(gs)
     mdf.description = mdf.description.fillna(mdf.p_description)
     mdf.to_pickle(f"{DATA_DIR}/mediatedDf.pkl")
@@ -114,6 +110,7 @@ def download(url, name):
 
 
 def archiveMedia(df):
+    to_download = {}
     # base images
     bases = [
         b.split("\\")[-1].split(".")[0] for b in glob(f"{IMAGES_DIR}\\base\\*.jpeg")
@@ -126,7 +123,8 @@ def archiveMedia(df):
     for name, urls in base.iterrows():
         for i, url in enumerate(urls.dropna().tolist()):
             if name + f"_{i}" not in bases:
-                download(url, f"{IMAGES_DIR}/base/" + name + f"_{i}")
+                # add this filename, url pair to to_download
+                to_download[f"{IMAGES_DIR}/base/" + name + f"_{i}"] = url
 
     # variant images
     variants = [
@@ -137,10 +135,14 @@ def archiveMedia(df):
         .set_index("sku")
         .dropna(how="all")
     )
-    print("donwloading new pictures to archive...")
-    for name, url in tqdm.tqdm(variant.iterrows()):
+    for name, url in variant.iterrows():
         if name not in variants:
-            download(url.values[0], f"{IMAGES_DIR}/variant/" + name)
+            # add this filename, url pair to to_download
+            to_download[f"{IMAGES_DIR}/variant/" + name] = url.values[0]
+
+    # download step
+    for file_path, url in to_download.items():
+        download(file_path, url)
 
     # picklin' pics
     media = pd.read_pickle(f"{DATA_DIR}/media.pkl")
