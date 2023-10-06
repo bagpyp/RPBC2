@@ -494,3 +494,6 @@ for i, c in tqdm(enumerate(product_payloads_for_creation)):
 send_to_quivers()
 
 print("runtime: ", dt.datetime.now() - a)
+
+
+debug = True

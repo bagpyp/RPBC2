@@ -23,7 +23,18 @@ def call_iteratively(call, *args):
         return data
 
 
-def retry_request_using_response(res):
-    r = res.request
-    res = requests.request(method=r.method, url=r.url, headers=r.headers)
-    return res
+def retry_request_using_response(original_response, max_retries=3, retry_delay=5):
+    original_request = original_response.request
+    for i in range(max_retries):
+        try:
+            new_response = requests.request(
+                method=original_request.method,
+                url=original_request.url,
+                headers=original_request.headers,
+            )
+            if new_response.ok:
+                return new_response
+        except requests.exceptions.ConnectionError:
+            pass
+        time.sleep(retry_delay)
+    return original_response
