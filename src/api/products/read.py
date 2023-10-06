@@ -2,9 +2,10 @@ import datetime as dt
 
 import pandas as pd
 import requests
-from src.api.request_utils import call_iteratively
 
 from secret_info import headers, base, daysAgo
+from src.api.request_utils import call_iteratively
+from util.path_utils import DATA_DIR
 
 
 def get_product_by_sku(sku):
@@ -146,7 +147,7 @@ def _products_since(last_modified):
 
 
 def updated_products():
-    pdf = pd.read_pickle("../../../data/products.pkl")
+    pdf = pd.read_pickle(f"{DATA_DIR}/products.pkl")
     if len(pdf) > 0:
         new_p = _products_since(
             (dt.datetime.now() - dt.timedelta(days=daysAgo)).strftime(
@@ -163,11 +164,11 @@ def updated_products():
             # this is where we should remove all items with duplicated v_skus
             pdf = pdf[pdf.v_id.isin(pdf.groupby("v_sku", sort=False).v_id.max())]
             # keeping only those whose v_id is... LARGEST
-            pdf.to_pickle("../../../data/products.pkl")
+            pdf.to_pickle(f"{DATA_DIR}/products.pkl")
             return pdf
     else:
         new_p = _products_since("1970-01-01")
-        new_p.to_pickle("../../../data/products.pkl")
+        new_p.to_pickle(f"{DATA_DIR}/products.pkl")
         if new_p is None:
             return pdf
         else:

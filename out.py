@@ -8,6 +8,7 @@ import tqdm
 from numpy import nan
 
 from secret_info import stid, drive
+from util.path_utils import DATA_DIR
 
 
 # ecm out
@@ -138,7 +139,7 @@ def fromECM(run=True, ecm=True, drive=drive, stid=stid):
         }
 
         df = df.rename(columns=names)[names.values()]
-        df.to_pickle("data/fromECM.pkl")
+        df.to_pickle(f"{DATA_DIR}/fromECM.pkl")
         return df
     if not run:
-        return pd.read_pickle("data/fromECM.pkl")
+        return pd.read_pickle(f"{DATA_DIR}/fromECM.pkl")

@@ -33,6 +33,7 @@ from src.api import (
     get_product_by_name,
     retry_request_using_response,
 )
+from util.path_utils import DATA_DIR
 
 fast = False
 clearanceIsOn = False
@@ -216,7 +217,7 @@ df = df[
 ]
 
 if fast:
-    pdf = pd.read_pickle("data/products.pkl")
+    pdf = pd.read_pickle(f"{DATA_DIR}/products.pkl")
 else:
     print("pulling product data from BigCommerce")
     pdf = updated_products().reset_index()
@@ -264,7 +265,7 @@ df = df[~df.sku.duplicated(keep=False)]
 archiveMedia(df)
 
 # %% DELETE CONFLICT PRODUCTS
-df = pd.read_pickle("data/mediatedDf.pkl")
+df = pd.read_pickle(f"{DATA_DIR}/mediatedDf.pkl")
 nosync = df.groupby("webName").filter(
     lambda g: ((g.p_id.count() > 0) & (g[["p_id", "v_id"]].count().sum() < len(g)))
 )
@@ -291,7 +292,7 @@ df.loc[
     ],
 ] = nan
 
-mdf = pd.read_pickle("data/media.pkl")
+mdf = pd.read_pickle(f"{DATA_DIR}/media.pkl")
 df.update(mdf)
 df = df.join(fileDf())
 df.index.name = "sku"
@@ -352,7 +353,7 @@ df.pAmazon = df.pAmazon.round(2)
 
 df["listOnAmazon"] = ~df.BRAND.isin(amazon_excluded_vendors)
 
-df.to_pickle("data/ready.pkl")
+df.to_pickle(f"{DATA_DIR}/ready.pkl")
 
 gb = df.groupby("webName")
 
@@ -466,7 +467,7 @@ for i, c in tqdm(enumerate(product_payloads_for_creation)):
                 )
             )
             mdf.loc[bad_image_skus, mdf.columns != "description"] = nan
-            mdf.to_pickle("data/media.pkl")
+            mdf.to_pickle(f"{DATA_DIR}/media.pkl")
             c["is_visible"] = False
             res = create_product(c)
     # res had been written over many times potentially,

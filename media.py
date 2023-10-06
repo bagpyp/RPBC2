@@ -6,6 +6,8 @@ import requests
 import tqdm
 from numpy import nan
 
+from util.path_utils import DATA_DIR, IMAGES_DIR
+
 
 # redefine product data model topology
 
@@ -102,7 +104,7 @@ def reshapeMedia(df):
     gs = [mediate(g) for _, g in tqdm.tqdm(gb)]
     mdf = pd.concat(gs)
     mdf.description = mdf.description.fillna(mdf.p_description)
-    mdf.to_pickle("data/mediatedDf.pkl")
+    mdf.to_pickle(f"{DATA_DIR}/mediatedDf.pkl")
     return mdf
 
 
@@ -113,7 +115,9 @@ def download(url, name):
 
 def archiveMedia(df):
     # base images
-    bases = [b.split("\\")[-1].split(".")[0] for b in glob("images\\base\\*.jpeg")]
+    bases = [
+        b.split("\\")[-1].split(".")[0] for b in glob(f"{IMAGES_DIR}\\base\\*.jpeg")
+    ]
     base = (
         df[df.sku.str[:2] != "1-"][["sku"] + [f"image_{i}" for i in range(5)]]
         .set_index("sku")
@@ -122,11 +126,11 @@ def archiveMedia(df):
     for name, urls in base.iterrows():
         for i, url in enumerate(urls.dropna().tolist()):
             if name + f"_{i}" not in bases:
-                download(url, "images/base/" + name + f"_{i}")
+                download(url, f"{IMAGES_DIR}/base/" + name + f"_{i}")
 
     # variant images
     variants = [
-        b.split("\\")[-1].split(".")[0] for b in glob("images\\variant\\*.jpeg")
+        b.split("\\")[-1].split(".")[0] for b in glob(f"{IMAGES_DIR}\\variant\\*.jpeg")
     ]
     variant = (
         df[df.sku.str[:2] == "1-"][["sku", "v_image_url"]]
@@ -136,21 +140,23 @@ def archiveMedia(df):
     print("donwloading new pictures to archive...")
     for name, url in tqdm.tqdm(variant.iterrows()):
         if name not in variants:
-            download(url.values[0], "images/variant/" + name)
+            download(url.values[0], f"{IMAGES_DIR}/variant/" + name)
 
     # picklin' pics
-    media = pd.read_pickle("data/media.pkl")
+    media = pd.read_pickle(f"{DATA_DIR}/media.pkl")
     media_now = df[
         ["sku", "v_image_url", "description"] + [f"image_{i}" for i in range(5)]
     ].set_index("sku")
     media.update(media_now)
     media = pd.concat([media, media_now[~media_now.index.isin(media.index)]])
-    media.to_pickle("data/media.pkl")
+    media.to_pickle(f"{DATA_DIR}/media.pkl")
 
 
 def fileDf():
-    v = [g.split("\\")[-1].split(".")[0] for g in glob("images\\variant\\*")]
-    b = pd.DataFrame([g.split("\\")[-1].split(".")[0] for g in glob("images\\base\\*")])
+    v = [g.split("\\")[-1].split(".")[0] for g in glob(f"{IMAGES_DIR}\\variant\\*")]
+    b = pd.DataFrame(
+        [g.split("\\")[-1].split(".")[0] for g in glob(f"{IMAGES_DIR}\\base\\*")]
+    )
     b = (
         b[b[0].str.contains("_")][0]
         .str.split("_", expand=True)[0]

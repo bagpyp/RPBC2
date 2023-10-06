@@ -5,6 +5,7 @@ import pandas as pd
 import paramiko
 
 from secret_info import qftp
+from util.path_utils import DATA_DIR
 
 brands = [
     "Marker USA",
@@ -19,7 +20,7 @@ brands = [
 
 
 def send_to_quivers():
-    df = pd.read_pickle("data/ready.pkl").set_index("sku")
+    df = pd.read_pickle(f"{DATA_DIR}/ready.pkl").set_index("sku")
 
     qdf = df.loc[
         # 1- or 2- type product, not class representatives, non-null upc

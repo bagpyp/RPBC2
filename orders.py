@@ -5,6 +5,7 @@ from json import JSONDecodeError
 import requests
 
 from secret_info import base, headers, sls_base, sls_headers
+from util.path_utils import DATA_DIR
 
 
 def _get_orders(status_id, i):
@@ -30,12 +31,12 @@ def new_orders(kind="orders"):
             n += 1
     orders = sorted(orders, key=lambda k: int(k["id"]))
 
-    with open(f"data/bc_{kind}.json") as file:
+    with open(f"{DATA_DIR}/bc_{kind}.json") as file:
         # SOME OF THESE MIGHT NOW BE RETURNS, AND NOT IN `orders`
         try:
             archive = json.load(file)
         except JSONDecodeError:
-            with open(f"data/bc_{kind}.json", "w") as file:
+            with open(f"{DATA_DIR}/bc_{kind}.json", "w") as file:
                 json.dump(orders, file)
             archive = orders
     archived_ids = [o["id"] for o in archive]
@@ -43,7 +44,7 @@ def new_orders(kind="orders"):
     new_orders = [o for o in orders if o["id"] not in archived_ids]
     # either there are some orders, or not!
     if new_orders:
-        with open(f"data/bc_{kind}.json", "w") as file:
+        with open(f"{DATA_DIR}/bc_{kind}.json", "w") as file:
             # HERE WE NEED A UNION OF BOTH 'orders' AND 'archive'
             # NOT JUST `orders`
             json.dump(archive + new_orders, file)
@@ -121,12 +122,12 @@ def new_sls_orders(kind="orders"):
 
     orders = sorted(sls_orders, key=lambda k: k["created_at"])
 
-    with open(f"data/sls_{kind}.json") as file:
+    with open(f"{DATA_DIR}/sls_{kind}.json") as file:
         archive = json.load(file)
     archived_ids = [o["order_id"] for o in archive]
     new_orders = [o for o in orders if o["order_id"] not in archived_ids]
     if new_orders:
-        with open(f"data/sls_{kind}.json", "w") as file:
+        with open(f"{DATA_DIR}/sls_{kind}.json", "w") as file:
             json.dump(archive + new_orders, file)
     # return new_orders
     orders = []

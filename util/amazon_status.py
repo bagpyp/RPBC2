@@ -3,6 +3,7 @@ from numpy import where
 from tqdm import tqdm
 
 from src.api import update_custom_field, get_all_brand_ids
+from util.path_utils import DATA_DIR
 
 #  copied list from main.py, can't import it without running main
 amazon_excluded_vendors = [
@@ -59,7 +60,7 @@ amazon_excluded_brand_ids = list(
 if None in amazon_excluded_brand_ids:
     amazon_excluded_brand_ids.remove(None)
 
-pdf = pd.read_pickle("../data/products.pkl")
+pdf = pd.read_pickle(f"{DATA_DIR}/products.pkl")
 cols = ["p_brand_id", "p_id"]
 pdf = pdf[cols].copy()
 pdf.loc[:, "p_brand_id"] = pdf["p_brand_id"].astype(int)
@@ -72,7 +73,7 @@ pdf.loc[:, "p_id"] = pdf.p_id.astype(int)
 custom_fields = pdf.set_index("p_id").amazon_status.to_dict()
 
 if __name__ == "__main__":
-    pdf = pd.read_pickle("../data/products.pkl")
+    pdf = pd.read_pickle(f"{DATA_DIR}/products.pkl")
     pdf_changed = False
     for p_id, amazon_status in tqdm(custom_fields.items()):
         res = update_custom_field(p_id, "Amazon Status", amazon_status)
@@ -82,4 +83,4 @@ if __name__ == "__main__":
                 pdf_changed = True
     if pdf_changed:
         print("committing pdf changes to products.pkl")
-        pdf.to_pickle("../data/products.pkl")
+        pdf.to_pickle(f"{DATA_DIR}/products.pkl")

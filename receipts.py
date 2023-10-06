@@ -9,6 +9,7 @@ import pandas as pd
 
 from maps import customer_data, prefix_map, assoc_map
 from secret_info import stid, drive
+from util.path_utils import DATA_DIR, INVOICES_DIR
 
 
 # %%
@@ -209,7 +210,7 @@ def base_items(order, ecm_data):
 
 class Invoice:
     def __init__(self, order, no, regular=True):
-        self.ecm_data = pd.read_pickle("data/fromECM.pkl")
+        self.ecm_data = pd.read_pickle(f"{DATA_DIR}/fromECM.pkl")
         c = comments(order)
         self.invc_sid = sid()
         self.invc_no = no
@@ -254,12 +255,12 @@ class Invoice:
 def document(orders, ecm=True, drive=drive, stid=f"{stid}", regular=True):
     order_counts = {}
     for api_source in ["sls", "bc"]:
-        with open(f"data/{api_source}_orders.json") as f:
+        with open(f"{DATA_DIR}/{api_source}_orders.json") as f:
             order_counts[api_source] = len(json.load(f))
 
     return_counts = {}
     for api_source in ["sls", "bc"]:
-        with open(f"data/{api_source}_returns.json") as f:
+        with open(f"{DATA_DIR}/{api_source}_returns.json") as f:
             return_counts[api_source] = len(json.load(f))
 
     if orders == []:
@@ -287,7 +288,7 @@ def document(orders, ecm=True, drive=drive, stid=f"{stid}", regular=True):
         if ecm:
             path = rf"{drive}:\ECM\Polling\{stid}\PROC\IN\Invoice001.xml"
             # write invoice to invoices/
-            with open(f"invoices/Invoice{sid()}.xml", "w") as otherFile:
+            with open(f"{INVOICES_DIR}/Invoice{sid()}.xml", "w") as otherFile:
                 otherFile.write(
                     header
                     + "".join(
@@ -295,7 +296,7 @@ def document(orders, ecm=True, drive=drive, stid=f"{stid}", regular=True):
                     )
                     + footer
                 )
-            with open("invoices/written.csv", "a") as logFile:
+            with open(f"{INVOICES_DIR}/written.csv", "a") as logFile:
                 logFile.writelines(
                     [
                         ",".join(
