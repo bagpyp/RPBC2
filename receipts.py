@@ -7,19 +7,11 @@ import json
 import time
 from maps import customer_data, prefix_map, assoc_map
 
-order_counts = {}
-for api_source in ["sls", "bc"]:
-    with open(f"data/{api_source}_orders.json") as f:
-        order_counts[api_source] = len(json.load(f))
 
-return_counts = {}
-for api_source in ["sls", "bc"]:
-    with open(f"data/{api_source}_returns.json") as f:
-        return_counts[api_source] = len(json.load(f))
 
 import pandas as pd
 
-ecmdf = pd.read_pickle("data/fromECM.pkl")
+
 
 
 # %%
@@ -160,12 +152,12 @@ def fee_attrib(order):
     return fee_attrib
 
 
-def items(order):
+def items(order, ecm_data):
     items = []
     for i, product in enumerate(order["products"]):
         sku = product["sku"].split("-")[1].lstrip("0")
         try:
-            record = ecmdf.fillna("").astype(str)[ecmdf.sku == sku].iloc[0].to_dict()
+            record = ecm_data.fillna("").astype(str)[ecm_data.sku == sku].iloc[0].to_dict()
         except IndexError:
             print(f"item with sku {sku} does not exist in Retail Pro.")
             continue
@@ -186,12 +178,12 @@ def items(order):
     return items
 
 
-def base_items(order):
+def base_items(order, ecm_data):
     base_items = []
     for product in order["products"]:
         sku = product["sku"].split("-")[1].lstrip("0")
         try:
-            record = ecmdf.fillna("").astype(str)[ecmdf.sku == sku].iloc[0].to_dict()
+            record = ecm_data.fillna("").astype(str)[ecm_data.sku == sku].iloc[0].to_dict()
         except IndexError:
             continue
         base_item = {
@@ -216,6 +208,7 @@ def base_items(order):
 
 class Invoice:
     def __init__(self, order, no, regular=True):
+        self.ecm_data = pd.read_pickle("data/fromECM.pkl")
         c = comments(order)
         self.invc_sid = sid()
         self.invc_no = no
@@ -230,7 +223,7 @@ class Invoice:
         ]
         self.invc_items = [
             {"invc_item": i, "invc_base_item": b}
-            for i, b in zip(*(items(order), base_items(order)))
+            for i, b in zip(*(items(order, self.ecm_data), base_items(order, self.ecm_data)))
         ]
 
     def to_xml(self):
@@ -256,6 +249,19 @@ class Invoice:
 
 
 def document(orders, ecm=True, drive=drive, stid=f"{stid}", regular=True):
+
+
+    order_counts = {}
+    for api_source in ["sls", "bc"]:
+        with open(f"data/{api_source}_orders.json") as f:
+            order_counts[api_source] = len(json.load(f))
+
+    return_counts = {}
+    for api_source in ["sls", "bc"]:
+        with open(f"data/{api_source}_returns.json") as f:
+            return_counts[api_source] = len(json.load(f))
+
+
     if orders == []:
         print(
             "no new orders found on bigcommerce, make sure completed orders are marked `Completed` in orders page of admin panel"
