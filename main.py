@@ -5,6 +5,7 @@ Created on Mon Oct  5 10:29:51 2020
 @author: Bagpyp
 """
 import datetime as dt
+import json
 import re
 from time import sleep, gmtime
 
@@ -33,7 +34,7 @@ from src.api import (
     get_product_by_name,
     retry_request_using_response,
 )
-from util.path_utils import DATA_DIR
+from util.path_utils import DATA_DIR, LOGS_DIR
 
 fast = False
 clearanceIsOn = False
@@ -490,6 +491,17 @@ for i, c in tqdm(enumerate(product_payloads_for_creation)):
 
     else:
         failed_to_create.append(res)
+
+
+with open(f"{LOGS_DIR}/failed_to_create.log", "w") as ftc_log_file:
+    for creation_failure_response in failed_to_create:
+        original_payload = json.loads(creation_failure_response.request.body)
+        response = creation_failure_response.json()
+
+        ftc_log_file.write(json.dumps(response["errors"]) + "\n")
+        ftc_log_file.write(
+            f"name: {original_payload['name']}, sku: {original_payload['sku']}\n\n"
+        )
 
 send_to_quivers()
 

@@ -4,6 +4,7 @@ invoices
 images
 data
 accounting
+logs
 
 .vscode
 .idea
