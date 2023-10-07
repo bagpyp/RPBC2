@@ -7,8 +7,8 @@ import xml.etree.ElementTree as ET
 
 import pandas as pd
 
-from maps import customer_data, prefix_map, assoc_map
 from secret_info import stid, drive
+from src.data_maps.channel_maps import prefix_map, assoc_map, customer_data
 from util.path_utils import DATA_DIR, INVOICES_DIR
 
 

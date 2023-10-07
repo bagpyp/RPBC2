@@ -13,7 +13,6 @@ import pandas as pd
 from numpy import where, nan
 from tqdm import tqdm
 
-from maps import to_clearance_map, clearance_map, category_map, to_ebay_map
 from media import configureOptions, reshapeMedia, archiveMedia, fileDf
 from orders import get_all_orders, get_all_returns
 from out import fromECM
@@ -33,6 +32,12 @@ from src.api import (
     get_product_by_sku,
     get_product_by_name,
     retry_request_using_response,
+)
+from src.data_maps.category_maps import (
+    category_map,
+    clearance_map,
+    to_clearance_map,
+    to_ebay_map,
 )
 from util.path_utils import DATA_DIR, LOGS_DIR
 
