@@ -6,6 +6,8 @@ data
 accounting
 logs
 
+src/data_maps
+
 .vscode
 .idea
 __pycache__
