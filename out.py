@@ -21,7 +21,6 @@ def fromECM(run=True, ecm=True, drive=drive, stid=stid):
         invns = []
         for file in glob(rf"{drive}:\ECM\Polling\{stid}\OUT\Inventory*"):
             invns.extend(ET.parse(file).getroot().findall("./INVENTORYS/INVENTORY"))
-            print(f"{file} parsed")
 
         # turn each item into a dicitonary
         inventorys = []
