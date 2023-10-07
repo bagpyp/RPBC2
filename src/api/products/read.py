@@ -142,5 +142,5 @@ def updated_products():
     )
     pdf.loc[:, "p_id"] = pdf.p_id.astype(int).astype(str)
     pdf.loc[:, "v_id"] = pdf.v_id.astype(int).astype(str)
-    pdf.to_pickl(f"{DATA_DIR}/products.pkl")
+    pdf.to_pickle(f"{DATA_DIR}/products.pkl")
     return pdf
