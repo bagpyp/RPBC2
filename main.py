@@ -33,7 +33,7 @@ from src.api import (
     get_product_by_name,
     retry_request_using_response,
 )
-from src.data_maps.category_maps import (
+from src.data_maps import (
     category_map,
     clearance_map,
     to_clearance_map,
