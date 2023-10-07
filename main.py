@@ -413,7 +413,6 @@ if len(product_payloads_for_update) > 0:
                 update_custom_field(uid, "Amazon Status", "Disabled")
             if all([r.ok for r in res]):
                 updated.append(res)
-
         else:
             failed_to_update.append(res)
 
@@ -497,16 +496,23 @@ for i, c in tqdm(enumerate(product_payloads_for_creation)):
     else:
         failed_to_create.append(res)
 
+if failed_to_create:
+    with open(f"{LOGS_DIR}/failed_to_create.log", "w") as ftc_log_file:
+        for creation_failure_response in failed_to_create:
+            original_payload = json.loads(creation_failure_response.request.body)
+            response = creation_failure_response.json()
 
-with open(f"{LOGS_DIR}/failed_to_create.log", "w") as ftc_log_file:
-    for creation_failure_response in failed_to_create:
-        original_payload = json.loads(creation_failure_response.request.body)
-        response = creation_failure_response.json()
+            ftc_log_file.write(json.dumps(response["errors"]) + "\n")
+            ftc_log_file.write(
+                f"name: {original_payload['name']}, sku: {original_payload['sku']}\n\n"
+            )
 
-        ftc_log_file.write(json.dumps(response["errors"]) + "\n")
-        ftc_log_file.write(
-            f"name: {original_payload['name']}, sku: {original_payload['sku']}\n\n"
-        )
+if failed_to_update:
+    with open(f"{LOGS_DIR}/failed_to_update.log", "w") as ftu_log_file:
+        for update_failure_response_group in failed_to_update:
+            for update_failure_response in update_failure_response_group:
+                ftu_log_file.write(update_failure_response.text + "\n")
+
 
 send_to_quivers()
 
