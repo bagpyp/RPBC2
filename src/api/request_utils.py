@@ -20,7 +20,7 @@ def call_iteratively(call, *args):
         return data
 
 
-def retry_request_using_response(original_response, max_retries=3, retry_delay=5):
+def retry_request_using_response(original_response, max_retries=2, retry_delay=2):
     original_request = original_response.request
     for i in range(max_retries):
         try:

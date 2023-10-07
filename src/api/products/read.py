@@ -22,23 +22,21 @@ def get_product_by_name(name_):
     return res
 
 
-def _get_products(last_modified, i=1):
+def _get_products(i=1):
     url = (
         base
         + "v3/catalog/products"
         + f"?limit=10&page={i}"
         + "&include=variants,images"
     )
-    # TODO: actually call only products using last_modified_date
-    # + f'&date_modified:min={last_modified}'
     res = requests.get(url, headers=headers)
     return res
 
 
-def _products_since(last_modified):
-    data = call_iteratively(_get_products, last_modified)
-    products = []
+def updated_products():
+    data = call_iteratively(_get_products)
 
+    products = []
     for product in data:
         product_images = {}
         for i, image in enumerate(product["images"]):
@@ -138,38 +136,11 @@ def _products_since(last_modified):
 
             products.append(product_record_info)
 
-    if products:
-        df = pd.DataFrame(products)
-        df.loc[:, "p_categories"] = df.p_categories.apply(
-            lambda x: ",".join([str(y) for y in x])
-        )
-        return df
-
-
-def updated_products():
-    pdf = pd.read_pickle(f"{DATA_DIR}/products.pkl")
-    if len(pdf) > 0:
-        new_p = _products_since(
-            (dt.datetime.now() - dt.timedelta(days=daysAgo)).strftime(
-                "%Y-%m-%dT%H:%M:%S-07:00"
-            )
-        )
-        # this is where products are getting duplicated, in all but v_id
-        if len(new_p) > 0:
-            pdf = pdf.set_index("v_id")
-            new_p = new_p.set_index("v_id")
-            pdf.update(new_p)
-            pdf = pd.concat([pdf, new_p[~new_p.index.isin(pdf.index)]])
-            pdf = pdf.reset_index()
-            # this is where we should remove all items with duplicated v_skus
-            pdf = pdf[pdf.v_id.isin(pdf.groupby("v_sku", sort=False).v_id.max())]
-            # keeping only those whose v_id is... LARGEST
-            pdf.to_pickle(f"{DATA_DIR}/products.pkl")
-            return pdf
-    else:
-        new_p = _products_since("1970-01-01")
-        new_p.to_pickle(f"{DATA_DIR}/products.pkl")
-        if new_p is None:
-            return pdf
-        else:
-            return new_p
+    pdf = pd.DataFrame(products)
+    pdf.loc[:, "p_categories"] = pdf.p_categories.apply(
+        lambda x: ",".join([str(y) for y in x])
+    )
+    pdf.loc[:, "p_id"] = pdf.p_id.astype(int).astype(str)
+    pdf.loc[:, "v_id"] = pdf.v_id.astype(int).astype(str)
+    pdf.to_pickl(f"{DATA_DIR}/products.pkl")
+    return pdf
