@@ -142,7 +142,7 @@ def archiveMedia(df):
 
     # download step
     for file_path, url in to_download.items():
-        download(file_path, url)
+        download(url, file_path)
 
     # picklin' pics
     media = pd.read_pickle(f"{DATA_DIR}/media.pkl")
