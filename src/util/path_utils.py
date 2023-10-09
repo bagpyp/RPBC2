@@ -5,5 +5,5 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 
 DATA_DIR = os.path.join(ROOT_DIR, "data")
 IMAGES_DIR = os.path.join(ROOT_DIR, "images")
-INVOICES_DIR = os.path.join(ROOT_DIR, "invoice")
+INVOICES_DIR = os.path.join(ROOT_DIR, "invoices")
 LOGS_DIR = os.path.join(ROOT_DIR, "logs")
