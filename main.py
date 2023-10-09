@@ -44,7 +44,7 @@ from src.product_images import build_image_locations_from_file_structure
 from src.product_images import persist_web_media
 from src.transformations import build_product_group_structure
 from src.transformations import collect_images_from_product_children
-from src.util.path_utils import DATA_DIR, LOGS_DIR
+from src.util.path_utils import DATA_DIR, LOGS_DIR, INVOICES_DIR
 
 skip_receipt_creation_ecm_out_and_product_download = False
 clearanceIsOn = False
@@ -119,7 +119,7 @@ if not skip_receipt_creation_ecm_out_and_product_download:
     all_new_orders = get_all_orders()
     write_orders_to_ecm(all_new_orders)
 
-    w = pd.read_csv("invoice/written.csv")
+    w = pd.read_csv(f"{INVOICES_DIR}/written.csv")
     all_new_returns = get_all_returns()
     write_orders_to_ecm(
         [
