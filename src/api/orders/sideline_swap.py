@@ -7,6 +7,7 @@ from src.util.path_utils import DATA_DIR
 
 
 def pull_orders_from_sideline_swap(kind="orders"):
+    print(f"Pulling new {kind} from SidelineSwap...")
     i = 1
     url = sls_base + "orders"
     res = requests.get(url, headers=sls_headers).json()
