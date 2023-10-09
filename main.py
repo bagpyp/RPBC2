@@ -13,13 +13,8 @@ import pandas as pd
 from numpy import where, nan
 from tqdm import tqdm
 
-from media import configureOptions, reshapeMedia, archiveMedia, fileDf
-from orders import get_all_orders, get_all_returns
-from out import fromECM
-from payloads import product_update_payload, product_creation_payload
-from quivers import send_to_quivers
-from receipts import document
-from secret_info import daysAgo
+from config import daysAgo
+from scripts.quivers import send_to_quivers
 from src.api import (
     delete_product,
     get_all_brand_ids,
@@ -28,20 +23,30 @@ from src.api import (
     update_product,
     update_custom_field,
     create_product,
-    updated_products,
     get_product_by_sku,
     get_product_by_name,
     retry_request_using_response,
 )
+from src.api.orders import pull_orders_from_big_commerce
+from src.api.orders import pull_orders_from_sideline_swap
+from src.api.products.create import product_creation_payload
+from src.api.products.read import get_all_product_data_from_big_commerce
+from src.api.products.update import product_update_payload
 from src.data_maps import (
     category_map,
     clearance_map,
     to_clearance_map,
     to_ebay_map,
 )
-from util.path_utils import DATA_DIR, LOGS_DIR
+from src.ecm import read_ecm_data_into_dataframe
+from src.ecm import write_orders_to_ecm
+from src.product_images import build_image_locations_from_file_structure
+from src.product_images import persist_web_media
+from src.transformations import build_product_group_structure
+from src.transformations import collect_images_from_product_children
+from src.util.path_utils import DATA_DIR, LOGS_DIR
 
-fast = False
+skip_receipt_creation_ecm_out_and_product_download = False
 clearanceIsOn = False
 excluded_vendor_codes = []
 excluded_dcs_codes = []
@@ -94,16 +99,32 @@ print(f"Began {a}, processing changes in RetailPro over the last {daysAgo} days.
 
 # %% ORDERS AND RETURNS
 
-if not fast:
-    new_orders = get_all_orders()
-    document(new_orders)
 
-    w = pd.read_csv("invoices/written.csv")
-    new_returns = get_all_returns()
-    document(
+def get_all_orders():
+    return sorted(
+        pull_orders_from_sideline_swap() + pull_orders_from_big_commerce(),
+        key=lambda k: k["created_date"],
+    )
+
+
+def get_all_returns():
+    return sorted(
+        pull_orders_from_sideline_swap(kind="returns")
+        + pull_orders_from_big_commerce(kind="returns"),
+        key=lambda k: k["created_date"],
+    )
+
+
+if not skip_receipt_creation_ecm_out_and_product_download:
+    all_new_orders = get_all_orders()
+    write_orders_to_ecm(all_new_orders)
+
+    w = pd.read_csv("invoice/written.csv")
+    all_new_returns = get_all_returns()
+    write_orders_to_ecm(
         [
             ret
-            for ret in new_returns
+            for ret in all_new_returns
             if str(ret.get("id"))
             in w.comment1.apply(lambda x: x.split(" ")[1]).tolist()
         ],
@@ -112,11 +133,11 @@ if not fast:
 
 # %% ECM
 
-if fast:
-    df = fromECM(run=False, ecm=False)
+if skip_receipt_creation_ecm_out_and_product_download:
+    df = read_ecm_data_into_dataframe(bypass_ecm=True)
 else:
     print("Pulling data from ECM on the server via PROC OUT")
-    df = fromECM()
+    df = read_ecm_data_into_dataframe()
 
 # %% TRANSFORM
 df = df[(~df.VC.isin(excluded_vendor_codes)) & (~df.DCS.isin(excluded_dcs_codes))]
@@ -194,7 +215,7 @@ df.webName = df.ssid.map(chart.webName.to_dict())
 
 # %%  PRODUCT OPTIONS
 
-df = configureOptions(df)
+df = build_product_group_structure(df)
 
 # %%  JOIN AND MEDIATE
 
@@ -222,15 +243,12 @@ df = df[
     ]
 ]
 
-if fast:
+if skip_receipt_creation_ecm_out_and_product_download:
     pdf = pd.read_pickle(f"{DATA_DIR}/products.pkl")
 else:
     print("pulling product data from BigCommerce")
-    pdf = updated_products().reset_index()
+    pdf = get_all_product_data_from_big_commerce().reset_index()
 
-# should have no effect after problem is fixed
-pdf.p_id = pdf.p_id.astype(int).astype(str)
-pdf.v_id = pdf.v_id.astype(int).astype(str)
 df = df[~df.sku.duplicated(keep=False)]
 
 # LZ for 5 image columns
@@ -260,14 +278,14 @@ df = pd.merge(df, pdf, how="left", left_on="sku", right_on="v_sku").replace("", 
 # reshape and archive images and descriptions
 
 
-df = reshapeMedia(df)
+df = collect_images_from_product_children(df)
 
 print("Archiving new images from BigCommerce")
 sleep(1)
 # nuke duplicate SKUs
 df = df[~df.sku.duplicated(keep=False)]
 
-archiveMedia(df)
+persist_web_media(df)
 
 # %% DELETE CONFLICT PRODUCTS
 nosync = df.groupby("webName").filter(
@@ -298,7 +316,7 @@ df.loc[
 
 mdf = pd.read_pickle(f"{DATA_DIR}/media.pkl")
 df.update(mdf)
-df = df.join(fileDf())
+df = df.join(build_image_locations_from_file_structure())
 df.index.name = "sku"
 df = df.reset_index()
 

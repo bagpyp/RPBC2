@@ -9,7 +9,6 @@ from .products import delete_product
 from .products import (
     get_product_by_name,
     get_product_by_sku,
-    updated_products,
 )
 from .products import update_product
 from .request_utils import call_iteratively, retry_request_using_response

@@ -1,6 +1,6 @@
 import requests
 
-from secret_info import headers, base
+from config import headers, base
 
 
 def _create_custom_field(product_id, key, value):

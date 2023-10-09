@@ -4,8 +4,8 @@ import os
 import pandas as pd
 import paramiko
 
-from secret_info import qftp
-from util.path_utils import DATA_DIR
+from config import qftp
+from src.util.path_utils import DATA_DIR
 
 brands = [
     "Marker USA",

@@ -3,7 +3,7 @@ from numpy import where
 from tqdm import tqdm
 
 from src.api import update_custom_field, get_all_brand_ids
-from util.path_utils import DATA_DIR
+from src.util.path_utils import DATA_DIR
 
 #  copied list from main.py, can't import it without running main
 amazon_excluded_vendors = [

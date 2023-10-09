@@ -1,11 +1,9 @@
-import datetime as dt
-
 import pandas as pd
 import requests
 
-from secret_info import headers, base, daysAgo
+from config import headers, base
 from src.api.request_utils import call_iteratively
-from util.path_utils import DATA_DIR
+from src.util.path_utils import DATA_DIR
 
 
 def get_product_by_sku(sku):
@@ -33,7 +31,7 @@ def _get_products(i=1):
     return res
 
 
-def updated_products():
+def get_all_product_data_from_big_commerce():
     data = call_iteratively(_get_products)
 
     products = []

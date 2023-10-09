@@ -1,6 +1,6 @@
 import requests
 
-from secret_info import headers, base
+from config import headers, base
 from src.api.request_utils import call_iteratively
 
 

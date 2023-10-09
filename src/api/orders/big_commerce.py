@@ -4,8 +4,8 @@ from json import JSONDecodeError
 
 import requests
 
-from secret_info import base, headers, sls_base, sls_headers
-from util.path_utils import DATA_DIR
+from config import base, headers
+from src.util.path_utils import DATA_DIR
 
 
 def _get_orders(status_id, i):
@@ -14,7 +14,7 @@ def _get_orders(status_id, i):
     return res
 
 
-def new_orders(kind="orders"):
+def pull_orders_from_big_commerce(kind="orders"):
     print(f"Pulling new {kind} from BigCommerce...")
     status_ids = []
     if kind == "orders":
@@ -107,72 +107,3 @@ def new_orders(kind="orders"):
 
         orders.append(order)
     return orders
-
-
-def new_sls_orders(kind="orders"):
-    i = 1
-    url = sls_base + "orders"
-    res = requests.get(url, headers=sls_headers).json()
-    sls_orders = res["data"]
-    while res["meta"]["has_next"]:
-        i += 1
-        res = requests.get(url + f"?page={i}", headers=sls_headers)
-        res = res.json()
-        sls_orders.extend(res["data"])
-
-    orders = sorted(sls_orders, key=lambda k: k["created_at"])
-
-    with open(f"{DATA_DIR}/sls_{kind}.json") as file:
-        archive = json.load(file)
-    archived_ids = [o["order_id"] for o in archive]
-    new_orders = [o for o in orders if o["order_id"] not in archived_ids]
-    if new_orders:
-        with open(f"{DATA_DIR}/sls_{kind}.json", "w") as file:
-            json.dump(archive + new_orders, file)
-    # return new_orders
-    orders = []
-    for no in new_orders:
-        order = {}
-        # VARIABLE -
-        order["id"] = str(no["order_id"])
-        order["payment_id"] = "external"
-        order["channel"] = "SIDELINE"  # associate
-        order["payment_zone"] = "SidelineSwap"  # customer.first_name
-        # VARIABLE ^
-        order["created_date"] = no["created_at"].split(".")[0]
-        order["num_items"] = 1
-        order["total_amt"] = round(float(no["you_earned"]), 2)
-        order["products"] = [
-            {
-                "sku": no["item_sku"],
-                "qty": 1,
-                "amt_per": no["you_earned"],
-                "amt_total": no["you_earned"],
-            }
-        ]
-        if "shipment" in no:
-            if "status" in no["shipment"]:
-                order["status"] = no["shipment"]["status"]
-            else:
-                order["status"] = "NO STATUS"
-        else:
-            order["status"] = "NO STATUS"
-        orders.append(order)
-
-    statuses = []
-    if kind == "orders":
-        statuses = ["Pending_shipment", "Shipped", "Delivered"]
-    elif kind == "returns":
-        statuses = ["Cancelled"]
-    return [o for o in orders if o["status"].lower() in [s.lower() for s in statuses]]
-
-
-def get_all_orders():
-    return sorted(new_sls_orders() + new_orders(), key=lambda k: k["created_date"])
-
-
-def get_all_returns():
-    return sorted(
-        new_sls_orders(kind="returns") + new_orders(kind="returns"),
-        key=lambda k: k["created_date"],
-    )
