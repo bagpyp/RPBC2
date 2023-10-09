@@ -270,7 +270,6 @@ df = df[~df.sku.duplicated(keep=False)]
 archiveMedia(df)
 
 # %% DELETE CONFLICT PRODUCTS
-df = pd.read_pickle(f"{DATA_DIR}/mediatedDf.pkl")
 nosync = df.groupby("webName").filter(
     lambda g: ((g.p_id.count() > 0) & (g[["p_id", "v_id"]].count().sum() < len(g)))
 )

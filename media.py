@@ -97,16 +97,9 @@ def mediate(g):
 
 def reshapeMedia(df):
     gb = df.groupby("webName", sort=False)
-    gs = [mediate(g) for _, g in gb]
-    mdf = pd.concat(gs)
+    mdf = pd.concat([mediate(g) for _, g in gb])
     mdf.description = mdf.description.fillna(mdf.p_description)
-    mdf.to_pickle(f"{DATA_DIR}/mediatedDf.pkl")
     return mdf
-
-
-def download(url, name):
-    with open(name + ".jpeg", "wb") as f:
-        f.write(requests.get(url).content)
 
 
 def archiveMedia(df):
@@ -142,7 +135,8 @@ def archiveMedia(df):
 
     # download step
     for file_path, url in to_download.items():
-        download(file_path, url)
+        with open(file_path + ".jpeg", "wb") as f:
+            f.write(requests.get(url).content)
 
     # picklin' pics
     media = pd.read_pickle(f"{DATA_DIR}/media.pkl")
