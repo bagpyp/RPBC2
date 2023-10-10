@@ -10,6 +10,7 @@ from src.util.path_utils import DATA_DIR
 
 
 def prepare_df_for_upload(df):
+    df = df.copy()
     df.index.name = "sku"
     df = df.reset_index()
 

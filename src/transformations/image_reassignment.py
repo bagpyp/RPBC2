@@ -2,13 +2,13 @@ import pandas as pd
 from numpy import nan
 
 
-def _restructure_product_group_media(g):
-    if len(g) > 1:
+def _restructure_product_group_media(group):
+    if len(group) > 1:
         # lift images to base level of product group
-        g0 = g.iloc[[0]]
-        g1 = g.iloc[list(range(1, len(g)))]
-        g0.iloc[[0], -5:] = g1.iloc[[0], -5:].values
-        g1.loc[:, [f"image_{i}" for i in range(5)]] = nan
+        first_row = group.iloc[[0]]
+        rest_of_group = group.iloc[list(range(1, len(group)))]
+        first_row.iloc[[0], -5:] = rest_of_group.iloc[[0], -5:].values
+        rest_of_group.loc[:, [f"image_{i}" for i in range(5)]] = nan
         # lift all else p_
         for p in [
             "p_name",
@@ -21,14 +21,16 @@ def _restructure_product_group_media(g):
             "p_id",
             "description",
         ]:
-            if g1[p].count():
-                g0[p] = g1.loc[g1[p].first_valid_index()][p]
-                g1.loc[:, p] = nan
-        return pd.concat([g0, g1])
+            if rest_of_group[p].count():
+                first_row[p] = rest_of_group.loc[rest_of_group[p].first_valid_index()][
+                    p
+                ]
+                rest_of_group.loc[:, p] = nan
+        return pd.concat([first_row, rest_of_group])
     else:
-        g.image_0 = g.image_0.fillna(g.v_image_url)
-        g.v_image_url = nan
-        return g
+        group.image_0 = group.image_0.fillna(group.v_image_url)
+        group.v_image_url = nan
+        return group
 
 
 def collect_images_from_product_children(df):

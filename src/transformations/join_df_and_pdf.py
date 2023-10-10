@@ -3,6 +3,8 @@ from numpy import nan
 
 
 def attach_web_data_to_products(df, pdf):
+    df = df.copy()
+    pdf = pdf.copy()
     df = df[~df.sku.duplicated(keep=False)]
 
     # LZ for 5 image columns

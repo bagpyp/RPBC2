@@ -4,6 +4,7 @@ Created on Mon Oct  5 10:29:51 2020
 
 @author: Bagpyp
 """
+import concurrent.futures
 import datetime as dt
 
 import pandas as pd
@@ -48,8 +49,17 @@ if run_offline:
 
 else:
     process_orders_and_returns()
-    df = read_ecm_data_into_dataframe()
-    pdf = get_all_product_data_from_big_commerce()
+
+    # Using threads for concurrent execution
+    with concurrent.futures.ThreadPoolExecutor as executor:
+        # Use `submit` to schedule the functions to be run and get a Future object
+        future1 = executor.submit(read_ecm_data_into_dataframe)
+        future2 = executor.submit(get_all_product_data_from_big_commerce)
+
+        # Use `result` to wait for the function to finish and get its return value
+        df = future1.result()
+        pdf = future2.result()
+
     download_brand_ids()
     download_category_ids()
 

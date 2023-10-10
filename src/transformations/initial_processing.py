@@ -4,6 +4,7 @@ from src.constants import category_map
 
 
 def clean_and_filter(df):
+    df = df.copy()
     # nuke duplicate SKUs
     df = df.loc[~df.sku.duplicated(keep=False)]
 
