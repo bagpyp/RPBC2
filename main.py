@@ -9,7 +9,7 @@ import datetime as dt
 import pandas as pd
 from numpy import nan
 
-from config import days_to_update, run_offline
+from config import days_to_update, run_offline, sync_sideline_swap
 from scripts.quivers import send_to_quivers
 from src.api import delete_product
 from src.api.orders import get_all_orders, get_all_returns
@@ -37,11 +37,11 @@ print(
 # %% ORDERS AND RETURNS
 
 if not run_offline:
-    all_new_orders = get_all_orders()
+    all_new_orders = get_all_orders(sync_sideline_swap)
     write_orders_to_ecm(all_new_orders)
 
     w = pd.read_csv(f"{INVOICES_DIR}/written.csv")
-    all_new_returns = get_all_returns()
+    all_new_returns = get_all_returns(sync_sideline_swap)
     write_orders_to_ecm(
         [
             ret
