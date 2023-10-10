@@ -141,4 +141,4 @@ def get_all_product_data_from_big_commerce():
     pdf.loc[:, "p_id"] = pdf.p_id.astype(int).astype(str)
     pdf.loc[:, "v_id"] = pdf.v_id.astype(int).astype(str)
     pdf.to_pickle(f"{DATA_DIR}/products.pkl")
-    return pdf
+    return pdf.reset_index()

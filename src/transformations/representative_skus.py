@@ -51,5 +51,30 @@ def _restructure_product_group(g):
 
 def build_product_group_structure(df):
     gb = df.reset_index().groupby("webName", sort=False)
-    optionDf = pd.concat([_restructure_product_group(g) for _, g in gb]).reset_index()
-    return optionDf
+    df_with_options = pd.concat(
+        [_restructure_product_group(g) for _, g in gb]
+    ).reset_index()
+    df_with_options = df_with_options[
+        [
+            "webName",
+            "sku",
+            "UPC",
+            "CAT",
+            "DCSname",
+            "BRAND",
+            "name",
+            "mpn",
+            "size",
+            "color",
+            "qty",
+            "cost",
+            "pSale",
+            "pMAP",
+            "pMSRP",
+            "pAmazon",
+            "fCreated",
+            "lModified",
+            "description",
+        ]
+    ]
+    return df_with_options
