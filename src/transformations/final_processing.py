@@ -4,7 +4,7 @@ from numpy import nan, where
 
 from config import amazon_excluded_vendors
 from src.api import get_all_brand_ids, get_all_category_ids, create_brand
-from src.data_maps import to_clearance_map
+from src.constants import to_clearance_map
 from src.util.path_utils import DATA_DIR
 
 

@@ -3,7 +3,7 @@ import os
 import time
 
 from config import drive, stid
-from src.ecm.invoice.invoice import Invoice
+from src.server.invoice.invoice import Invoice
 from src.util.path_utils import DATA_DIR, INVOICES_DIR
 
 

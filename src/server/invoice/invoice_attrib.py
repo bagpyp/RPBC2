@@ -1,6 +1,6 @@
 import datetime as dt
 
-from src.data_maps import customer_data
+from src.constants import customer_data
 
 
 def times(time, regular=True):

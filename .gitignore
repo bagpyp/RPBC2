@@ -6,7 +6,7 @@ data
 accounting
 logs
 
-src/data_maps
+src/constants
 
 .vscode
 .idea

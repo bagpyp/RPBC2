@@ -1,4 +1,4 @@
-from src.data_maps import customer_data
+from src.constants import customer_data
 
 
 def customer_attrib(order):

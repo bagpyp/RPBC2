@@ -11,18 +11,13 @@ from numpy import nan
 
 from config import days_to_update, run_offline
 from scripts.quivers import send_to_quivers
-from src.api import (
-    delete_product,
-)
-from src.api.orders import pull_orders_from_big_commerce
-from src.api.orders import pull_orders_from_sideline_swap
-from src.api.products.create import product_creation_payload
+from src.api import delete_product
+from src.api.orders import get_all_orders, get_all_returns
 from src.api.products.read import get_all_product_data_from_big_commerce
-from src.api.products.update import product_update_payload
-from src.ecm import read_ecm_data_into_dataframe
-from src.ecm import write_orders_to_ecm
 from src.product_images import build_image_locations_from_file_structure
 from src.product_images import persist_web_media
+from src.server import read_ecm_data_into_dataframe
+from src.server import write_orders_to_ecm
 from src.transformations import (
     attach_web_data_to_products,
     build_product_group_structure,
@@ -30,8 +25,8 @@ from src.transformations import (
     collect_images_from_product_children,
     prepare_df_for_upload,
 )
-from src.up import create_products
-from src.up import update_products
+from src.upload.create import create_products, product_creation_payload
+from src.upload.update import update_products, product_update_payload
 from src.util.path_utils import DATA_DIR, INVOICES_DIR
 
 a = dt.datetime.now()
@@ -40,22 +35,6 @@ print(
 )
 
 # %% ORDERS AND RETURNS
-
-
-def get_all_orders():
-    return sorted(
-        pull_orders_from_sideline_swap() + pull_orders_from_big_commerce(),
-        key=lambda k: k["created_date"],
-    )
-
-
-def get_all_returns():
-    return sorted(
-        pull_orders_from_sideline_swap(kind="returns")
-        + pull_orders_from_big_commerce(kind="returns"),
-        key=lambda k: k["created_date"],
-    )
-
 
 if not run_offline:
     all_new_orders = get_all_orders()

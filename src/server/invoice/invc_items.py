@@ -1,4 +1,4 @@
-from src.data_maps import assoc_map
+from src.constants import assoc_map
 
 
 def invc_items(order, ecm_data):

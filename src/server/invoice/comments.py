@@ -1,4 +1,4 @@
-from src.data_maps import prefix_map
+from src.constants import prefix_map
 
 
 def comments(order):

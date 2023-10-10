@@ -14,7 +14,7 @@ from src.api import (
     get_product_by_name,
     update_custom_field,
 )
-from src.data_maps import to_ebay_map
+from src.constants import to_ebay_map
 from src.util.path_utils import DATA_DIR, LOGS_DIR
 
 

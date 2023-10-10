@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.data_maps import category_map
+from src.constants import category_map
 
 
 def clean_and_filter(df):
