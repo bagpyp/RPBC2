@@ -6,10 +6,14 @@ The payments for these orders belong in different places depending on how the us
 # BigCommerce
  - Authorize.net
  - PayPal
+ - BigCommmerce (default)
 
 # eBay
- - PayPal
- - Possibly another
+ - eBay
+ - PayPal (haven't figured out how to map)
 
 # Amazon
- - Charged to Amazon Customer?
+ - Amazon
+
+# Walmart
+ - WalmartPayPal
