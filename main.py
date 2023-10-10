@@ -9,7 +9,7 @@ import datetime as dt
 import pandas as pd
 from numpy import nan
 
-from config import days_to_update
+from config import days_to_update, run_offline
 from scripts.quivers import send_to_quivers
 from src.api import (
     delete_product,
@@ -33,8 +33,6 @@ from src.transformations import (
 from src.up import create_products
 from src.up import update_products
 from src.util.path_utils import DATA_DIR, INVOICES_DIR
-
-run_offline = False
 
 a = dt.datetime.now()
 print(
