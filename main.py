@@ -16,9 +16,9 @@ from src.api import (
 )
 from src.api.orders import pull_orders_from_big_commerce
 from src.api.orders import pull_orders_from_sideline_swap
-from src.api.products.create import product_creation_payload, create_products
+from src.api.products.create import product_creation_payload
 from src.api.products.read import get_all_product_data_from_big_commerce
-from src.api.products.update import product_update_payload, update_products
+from src.api.products.update import product_update_payload
 from src.ecm import read_ecm_data_into_dataframe
 from src.ecm import write_orders_to_ecm
 from src.product_images import build_image_locations_from_file_structure
@@ -30,6 +30,8 @@ from src.transformations import (
     collect_images_from_product_children,
     prepare_df_for_upload,
 )
+from src.up import create_products
+from src.up import update_products
 from src.util.path_utils import DATA_DIR, INVOICES_DIR
 
 run_offline = False
