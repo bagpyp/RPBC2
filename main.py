@@ -37,9 +37,9 @@ from src.upload.create import create_products
 from src.upload.update import update_products
 from src.util.path_utils import DATA_DIR
 
-a = dt.datetime.now()
+start_time = dt.datetime.now()
 print(
-    f"Began {a}, processing changes in RetailPro over the last {days_to_update} days..."
+    f"Began {start_time}, processing changes in RetailPro over the last {days_to_update} days..."
 )
 
 if run_offline:
@@ -49,7 +49,7 @@ if run_offline:
 else:
     process_orders_and_returns()
     df = read_ecm_data_into_dataframe()
-    pdf = get_all_product_data_from_big_commerce
+    pdf = get_all_product_data_from_big_commerce()
     download_brand_ids()
     download_category_ids()
 
