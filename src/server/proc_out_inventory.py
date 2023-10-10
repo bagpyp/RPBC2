@@ -9,10 +9,8 @@ from config import drive, stid
 from src.util.path_utils import DATA_DIR
 
 
-def read_ecm_data_into_dataframe(bypass_ecm=False, drive=drive, stid=stid):
-    if bypass_ecm:
-        return pd.read_pickle(f"{DATA_DIR}/fromECM.pkl")
-    # procout
+def read_ecm_data_into_dataframe(drive=drive, stid=stid):
+    print("Pulling data from ECM on the server via PROC OUT")
     os.system(f"{drive}:\\ECM\\ecmproc -out -a -stid:{stid}")
     # parse inventory xml files and build a list of 'items'
     invns = []

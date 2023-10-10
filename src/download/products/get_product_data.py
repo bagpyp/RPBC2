@@ -6,6 +6,8 @@ from src.util.path_utils import DATA_DIR
 
 
 def get_all_product_data_from_big_commerce():
+    print("Pulling product data from BigCommerce...")
+
     data = call_iteratively(_get_products)
 
     products = []

@@ -2,51 +2,28 @@ import pandas as pd
 from numpy import nan
 
 
-def _restructure_product_group(g):
-    if len(g) > 1:
-        fr = g.iloc[[0]].copy()
-        fr.sku = "0-" + fr.sku
-        fr.loc[:, ["isid", "UPC", "mpn", "alt_color", "size", "color"]] = nan
-        fr.loc[
-            :,
-            [
-                "pSale",
-                "pMAP",
-                "pMSRP",
-                "pAmazon",
-                "pSWAP",
-                "fCreated",
-                "lModified",
-                "fRcvd",
-                "lRcvd",
-                "lSold",
-            ],
-        ] = (
-            g.loc[
-                :,
-                [
-                    "pSale",
-                    "pMAP",
-                    "pMSRP",
-                    "pAmazon",
-                    "pSWAP",
-                    "fCreated",
-                    "lModified",
-                    "fRcvd",
-                    "lRcvd",
-                    "lSold",
-                ],
-            ]
-            .max()
-            .values
+def _restructure_product_group(product_group):
+    if len(product_group) > 1:
+        header_product_row = product_group.iloc[[0]].copy()
+        header_product_row.sku = "0-" + header_product_row.sku
+        header_product_row.loc[
+            :, ["isid", "UPC", "mpn", "alt_color", "size", "color"]
+        ] = nan
+        price_cols = ["pSale", "pMAP", "pMSRP", "pAmazon", "pSWAP"]
+        date_cols = ["fCreated", "lModified", "fRcvd", "lRcvd", "lSold"]
+        header_product_row.loc[:, price_cols] = (
+            product_group.loc[:, price_cols].max().values
         )
-        fr.cost = g.cost.min()
-        fr.qty = g.qty.sum()
-        g.sku = "1-" + g.sku
-        return pd.concat([fr, g])
+        header_product_row.loc[:, date_cols] = (
+            product_group.loc[:, date_cols].max().values
+        )
+        header_product_row.cost = product_group.cost.min()
+        header_product_row.qty = product_group.qty.sum()
+        product_group.sku = "1-" + product_group.sku
+        return pd.concat([header_product_row, product_group])
     else:
-        g.sku = "2-" + g.sku
-        return g.iloc[[0]]
+        product_group.sku = "2-" + product_group.sku
+        return product_group.iloc[[0]]
 
 
 def build_product_group_structure(df):

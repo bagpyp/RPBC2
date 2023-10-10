@@ -1,3 +1,4 @@
+from .build_payloads import build_payloads
 from .final_processing import prepare_df_for_upload
 from .image_reassignment import collect_images_from_product_children
 from .initial_processing import clean_and_filter

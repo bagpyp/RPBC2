@@ -5,30 +5,33 @@ from src.constants import category_map
 
 def clean_and_filter(df):
     # nuke duplicate SKUs
-    df = df[~df.sku.duplicated(keep=False)]
+    df = df.loc[~df.sku.duplicated(keep=False)]
 
     # just to make sure we have all the UPCs
-    df.UPC = df.UPC.fillna(df.UPC2)
+    df.loc[:, "UPC"] = df.UPC.fillna(df.UPC2)
     df.drop(columns="UPC2", inplace=True)
 
     # formatting columns
-    for i in range(12, 18):
-        df.iloc[:, i] = df.iloc[:, i].map(pd.to_numeric)
+    price_cols = ["cost", "pSale", "pMAP", "pMSRP", "pAmazon", "pSWAP"]
+    df.loc[:, price_cols] = df[price_cols].astype(float)
 
-    # bad solution
-    df.lModified = df.lModified.astype(str).str[:-6]
-    for i in range(18, 23):
-        df.iloc[:, i] = df.iloc[:, i].map(
-            lambda x: pd.to_datetime(x, format="%Y-%m-%dT%H:%M:%S")
+    very_old_date = pd.Timestamp("1900-01-01")
+    df.loc[:, "lModified"] = df.lModified.astype(str).str[:-6]
+    date_cols = ["fCreated", "lModified", "fRcvd", "lRcvd", "lSold"]
+    df.loc[:, date_cols] = (
+        df[date_cols]
+        .apply(pd.to_datetime, format="%Y-%m-%dT%H:%M:%S")
+        .fillna(very_old_date)
+    )
+
+    qty_cols = ["qty0", "qty1", "sQty0", "sQty1", "sQty"]
+    for col in qty_cols:
+        df.loc[:, col] = (
+            df[col].fillna("0").astype(int).apply(lambda x: 0 if x < 0 else x)
         )
 
-    for i in range(23, 29):
-        df.iloc[:, i] = (
-            df.iloc[:, i].fillna("0").astype(int).map(lambda x: 0 if x < 0 else x)
-        )
-
-    # ATTN: setting qty to only store quantity (qty1)
-    df.qty = df.qty1
+    # sets `qty` to store on-hand
+    df.loc[:, "qty"] = df.qty1
     # keeping old DCS name
     df["DCSname"] = df.CAT.values
 
@@ -48,7 +51,7 @@ def clean_and_filter(df):
     df = df.sort_values(by="sku")
     df.sku = df.sku.astype(str).str.zfill(5)
     df.set_index("sku", drop=True, inplace=True)
-    df = df[df["name"].notna()]
+    df = df.loc[df["name"].notna()]
     df["webName"] = (df.name.str.title() + " " + df.year.fillna("")).str.strip()
 
     # settling webNames with more than one ssid

@@ -1,9 +1,10 @@
+import json
 from time import gmtime
 
 from numpy import nan, where
 
 from config import amazon_excluded_vendors
-from src.api import get_all_brand_ids, get_all_category_ids, create_brand
+from src.api import create_brand
 from src.constants import to_clearance_map
 from src.util.path_utils import DATA_DIR
 
@@ -27,8 +28,11 @@ def prepare_df_for_upload(df):
         ["p_id", "v_id", "v_image_url", "image_0"]
     ].replace("", nan)
 
-    brand_ids = get_all_brand_ids()
-    category_ids = get_all_category_ids()
+    with open(f"{DATA_DIR}/brand_ids.json") as brand_file:
+        brand_ids = json.load(brand_file)
+    with open(f"{DATA_DIR}/category_ids.json") as category_file:
+        category_ids = json.load(category_file)
+
     for brand in df[~df.BRAND.isin(list(brand_ids.values()))].BRAND.unique():
         brand_ids.update({create_brand(brand): brand})
     df["brand"] = df.BRAND.str.lower().map(
