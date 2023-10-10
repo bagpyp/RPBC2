@@ -1,5 +1,5 @@
-from .big_commerce import pull_orders_from_big_commerce
-from .sideline_swap import pull_orders_from_sideline_swap
+from .get_bc_orders import pull_orders_from_big_commerce
+from .get_sls_orders import pull_orders_from_sideline_swap
 
 
 def get_all_orders(sideline_swap_is_on):

@@ -3,7 +3,6 @@ config.py
 invoices
 images
 data
-accounting
 logs
 
 src/constants

@@ -12,8 +12,10 @@ from numpy import nan
 from config import days_to_update, run_offline, sync_sideline_swap
 from scripts.quivers import send_to_quivers
 from src.api import delete_product
-from src.api.orders import get_all_orders, get_all_returns
-from src.api.products.read import get_all_product_data_from_big_commerce
+from src.download.orders import get_all_orders, get_all_returns
+from src.download.products import (
+    get_all_product_data_from_big_commerce,
+)
 from src.product_images import build_image_locations_from_file_structure
 from src.product_images import persist_web_media
 from src.server import read_ecm_data_into_dataframe
