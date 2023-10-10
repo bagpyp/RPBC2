@@ -61,3 +61,5 @@ def clean_and_filter(df):
             chart.iloc[i, 0] += f" {j + 1}"
             j += 1
     df.webName = df.ssid.map(chart.webName.to_dict())
+
+    return df

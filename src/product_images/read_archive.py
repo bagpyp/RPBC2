@@ -2,7 +2,7 @@ from glob import glob
 
 import pandas as pd
 
-from src.util.path_utils import IMAGES_DIR
+from src.util.path_utils import IMAGES_DIR, DATA_DIR
 
 
 def build_image_locations_from_file_structure():
@@ -28,4 +28,5 @@ def build_image_locations_from_file_structure():
                 files.loc[sku, f"image_{i}"] = sku + f"_{i}.jpeg"
     files.columns += "_file"
     files = "/product_images/imported/" + files
+    files.to_pickle(f"{DATA_DIR}/fileDf.pkl")
     return files

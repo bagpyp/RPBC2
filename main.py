@@ -116,8 +116,9 @@ nosync = df.groupby("webName").filter(
     lambda g: ((g.p_id.count() > 0) & (g[["p_id", "v_id"]].count().sum() < len(g)))
 )
 
-for id_ in nosync.p_id.dropna().unique().tolist():
-    delete_product(id_)
+if not run_offline:
+    for id_ in nosync.p_id.dropna().unique().tolist():
+        delete_product(id_)
 
 # problem
 df = df.set_index("sku")
@@ -143,11 +144,16 @@ df.loc[
 
 mdf = pd.read_pickle(f"{DATA_DIR}/media.pkl")
 df.update(mdf)
-df = df.join(build_image_locations_from_file_structure())
+
+if run_offline:
+    df = pd.read_pickle(f"{DATA_DIR}/fileDf.pkl")
+else:
+    df = df.join(build_image_locations_from_file_structure())
 
 
 # %% POST PROCESSING
 
+# the below function issues an api call to get all category/brand ids
 df = prepare_df_for_upload(df)
 
 gb = df.groupby("webName")
@@ -186,7 +192,8 @@ if not run_offline:
 
 # %% SEND RESULTS TO QUIVERS
 
-send_to_quivers()
+if not run_offline:
+    send_to_quivers()
 
 print("Runtime:", dt.datetime.now() - a)
 

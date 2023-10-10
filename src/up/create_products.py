@@ -2,10 +2,10 @@ import json
 import re
 from time import sleep
 
+import pandas as pd
 from numpy import nan
 from tqdm import tqdm
 
-from main import mdf
 from src.api import (
     create_product,
     retry_request_using_response,
@@ -21,6 +21,9 @@ from src.util.path_utils import DATA_DIR, LOGS_DIR
 def create_products(payloads):
     created = []
     failed_to_create = []
+
+    mdf = pd.read_pickle(f"{DATA_DIR}/media.pkl")
+
     if len(payloads) > 0:
         print(f"Creating {len(payloads)} products in BigCommerce...")
         sleep(1)
