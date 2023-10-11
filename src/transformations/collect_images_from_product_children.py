@@ -23,9 +23,9 @@ def _restructure_product_group_media(group):
             "description",
         ]:
             if rest_of_group[p].count():
-                first_row[p] = rest_of_group.loc[rest_of_group[p].first_valid_index()][
-                    p
-                ]
+                first_row.loc[:, p] = rest_of_group.loc[
+                    rest_of_group[p].first_valid_index()
+                ][p]
                 rest_of_group.loc[:, p] = nan
         return pd.concat([first_row, rest_of_group])
     else:
