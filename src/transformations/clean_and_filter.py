@@ -14,7 +14,7 @@ def clean_and_filter(df):
 
     # formatting columns
     price_cols = ["cost", "pSale", "pMAP", "pMSRP", "pAmazon", "pSWAP"]
-    df[price_cols] = df[price_cols].map(pd.to_numeric)
+    df[price_cols] = df.loc[:, price_cols].map(pd.to_numeric)
 
     very_old_date = pd.Timestamp("1900-01-01")
     df["lModified"] = df.lModified.astype(str).str[:-6]
