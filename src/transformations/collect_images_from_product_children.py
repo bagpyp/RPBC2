@@ -3,6 +3,7 @@ from numpy import nan
 
 
 def _restructure_product_group_media(group):
+    group = group.copy()
     if len(group) > 1:
         # lift images to base level of product group
         first_row = group.iloc[[0]]

@@ -6,33 +6,38 @@ from src.constants import category_map
 def clean_and_filter(df):
     df = df.copy()
     # nuke duplicate SKUs
-    df = df.loc[~df.sku.duplicated(keep=False)]
+    df = df[~df.sku.duplicated(keep=False)]
 
     # just to make sure we have all the UPCs
-    df.loc[:, "UPC"] = df.UPC.fillna(df.UPC2)
+    df["UPC"] = df.UPC.fillna(df.UPC2)
     df.drop(columns="UPC2", inplace=True)
 
     # formatting columns
     price_cols = ["cost", "pSale", "pMAP", "pMSRP", "pAmazon", "pSWAP"]
-    df.loc[:, price_cols] = df[price_cols].astype(float)
+    df[price_cols] = df[price_cols].map(pd.to_numeric)
 
     very_old_date = pd.Timestamp("1900-01-01")
-    df.loc[:, "lModified"] = df.lModified.astype(str).str[:-6]
+    df["lModified"] = df.lModified.astype(str).str[:-6]
     date_cols = ["fCreated", "lModified", "fRcvd", "lRcvd", "lSold"]
-    df.loc[:, date_cols] = (
-        df[date_cols]
-        .apply(pd.to_datetime, format="%Y-%m-%dT%H:%M:%S")
+    df[date_cols] = (
+        df.loc[:, date_cols]
+        .map(lambda x: pd.to_datetime(x, format="%Y-%m-%dT%H:%M:%S"))
         .fillna(very_old_date)
     )
 
     qty_cols = ["qty0", "qty1", "sQty0", "sQty1", "sQty"]
     for col in qty_cols:
-        df.loc[:, col] = (
-            df[col].fillna("0").astype(int).apply(lambda x: 0 if x < 0 else x)
+        df[col] = (
+            df[col]
+            .fillna("0")
+            .astype(float)
+            .apply(lambda x: 0 if x < 0 else x)
+            .fillna(0.0)
+            .astype(int)
         )
 
     # sets `qty` to store on-hand
-    df.loc[:, "qty"] = df.qty1
+    df["qty"] = df.qty1
     # keeping old DCS name
     df["DCSname"] = df.CAT.values
 
