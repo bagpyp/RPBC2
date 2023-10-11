@@ -3,51 +3,10 @@ from numpy import where
 from tqdm import tqdm
 
 from src.api import update_custom_field, get_all_brand_ids
+from src.constants import amazon_excluded_vendors
 from src.util.path_utils import DATA_DIR
 
 #  copied list from main.py, can't import it without running main
-amazon_excluded_vendors = [
-    "686",
-    "Arbor Snowboards",
-    "Arcade Belts",
-    "Bronson Speed Co.",
-    "Bullet",
-    "Burton",
-    "Capita",
-    "Crab Grab",
-    "Creature",
-    "Darn Tough",
-    "Gnu",
-    "Havaianas",
-    "Helly Hansen",
-    "Hestra",
-    "Hot Chillys",
-    "Hydro Flask",
-    "Independent",
-    "Lib Technologies",
-    "Marmot",
-    "Nike",
-    "OJ Iii",
-    "PIT VIPER",
-    "Picture Organic Clothing",
-    "RVCA",
-    "Reef",
-    "Ricta",
-    "Salomon Ski",
-    "Santa Cruz",
-    "Smartwool",
-    "Smith",
-    "Spyder Active Sports",
-    "Stance",
-    "Sun Bum",
-    "The North Face",
-    "Theragun",
-    "Turtle Fur",
-    "Under Armour",
-    "Union Binding Company",
-    "Vans",
-    "Wolfgang",
-]  # ex/ "686",
 big_commerce_brands = get_all_brand_ids()
 big_commerce_brands = {
     v: k for k, v in big_commerce_brands.items()
