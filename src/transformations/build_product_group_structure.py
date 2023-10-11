@@ -27,6 +27,7 @@ def _restructure_product_group(group):
 
 
 def build_product_group_structure(df):
+    print("Building Representative SKUs and Product Options Structure..")
     df = df.copy()
     gb = df.reset_index().groupby("webName", sort=False)
 

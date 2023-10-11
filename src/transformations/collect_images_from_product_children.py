@@ -35,6 +35,7 @@ def _restructure_product_group_media(group):
 
 
 def collect_images_from_product_children(df):
+    print("Shuffling images among product group Representatives and Members...")
     gb = df.groupby("webName", sort=False)
     mdf = pd.concat([_restructure_product_group_media(g) for _, g in gb])
     mdf.description = mdf.description.fillna(mdf.p_description)
