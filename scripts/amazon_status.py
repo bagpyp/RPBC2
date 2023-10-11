@@ -6,7 +6,7 @@ from src.api import update_custom_field, get_all_brand_ids
 from src.constants import amazon_excluded_vendors
 from src.util.path_utils import DATA_DIR
 
-#  copied list from main.py, can't import it without running main
+# TODO: should replace with json load
 big_commerce_brands = get_all_brand_ids()
 big_commerce_brands = {
     v: k for k, v in big_commerce_brands.items()
@@ -24,7 +24,7 @@ cols = ["p_brand_id", "p_id"]
 pdf = pdf[cols].copy()
 pdf.loc[:, "p_brand_id"] = pdf["p_brand_id"].astype(int)
 # to update one brand at a time (this one is Giro):
-pdf = pdf[pdf.p_brand_id == 5758]
+# pdf = pdf[pdf.p_brand_id == 5758]
 pdf["amazon_status"] = where(
     pdf.p_brand_id.isin(amazon_excluded_brand_ids), "Disabled", "Enabled"
 )
