@@ -7,11 +7,9 @@ Created on Mon Oct  5 10:29:51 2020
 import datetime as dt
 
 import pandas as pd
-from numpy import nan
 
 from config import days_to_update, run_offline
 from scripts.quivers import send_to_quivers
-from src.api import delete_product
 from src.download.orders import (
     process_orders_and_returns,
 )
@@ -32,6 +30,7 @@ from src.transformations import (
     clean_and_filter,
     collect_images_from_product_children,
     prepare_df_for_upload,
+    delete_conflict_products,
 )
 from src.upload.create import create_products
 from src.upload.update import update_products
@@ -55,40 +54,12 @@ else:
 
 df = clean_and_filter(df)
 df = build_product_group_structure(df)
+pdf = delete_conflict_products(df, pdf, delete_conflicts=not run_offline)
 df = attach_web_data_to_products(df, pdf)
 df = collect_images_from_product_children(df)
 
 if not run_offline:
     persist_web_media(df)
-
-"""some hood shit"""
-nosync = df.groupby("webName").filter(
-    lambda g: ((g.p_id.count() > 0) & (g[["p_id", "v_id"]].count().sum() < len(g)))
-)
-
-if not run_offline:
-    for id_ in nosync.p_id.dropna().unique().tolist():
-        delete_product(id_)
-
-# problem
-df = df.set_index("sku")
-df.loc[
-    nosync.sku.tolist(),
-    [
-        "p_name",
-        "p_sku",
-        "v_sku",
-        "p_categories",
-        "p_description",
-        "v_image_url",
-        "p_is_visible",
-        "p_date_created",
-        "p_date_modified",
-        "p_id",
-        "v_id",
-    ],
-] = nan
-""" end of hood shit """
 
 df.update(pd.read_pickle(f"{DATA_DIR}/media.pkl"))
 

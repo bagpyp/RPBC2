@@ -59,5 +59,6 @@ def build_product_group_structure(df):
         "lModified",
         "description",
     ]
-    df_with_options.to_pickle(f"{DATA_DIR}/option_df.pkl")
-    return df_with_options[column_order]
+    result = df_with_options[column_order]
+    result.to_pickle(f"{DATA_DIR}/option_df.pkl")
+    return result
