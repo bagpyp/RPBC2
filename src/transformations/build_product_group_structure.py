@@ -1,6 +1,8 @@
 import pandas as pd
 from numpy import nan
 
+from src.util.path_utils import DATA_DIR
+
 
 def _restructure_product_group(group):
     if len(group) > 1:
@@ -57,4 +59,5 @@ def build_product_group_structure(df):
         "lModified",
         "description",
     ]
+    df_with_options.to_pickle(f"{DATA_DIR}/option_df.pkl")
     return df_with_options[column_order]

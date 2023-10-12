@@ -3,9 +3,8 @@ from time import gmtime
 
 from numpy import nan, where
 
-from config import amazon_excluded_vendors
 from src.api import create_brand
-from src.constants import to_clearance_map
+from src.constants import amazon_excluded_vendors, to_clearance_map
 from src.util.path_utils import DATA_DIR
 
 
