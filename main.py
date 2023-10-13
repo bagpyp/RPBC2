@@ -61,7 +61,7 @@ df = collect_images_from_product_children(df)
 if not run_offline:
     persist_web_media(df)
 
-df = df.set_index('sku')
+df = df.set_index("sku")
 df.update(pd.read_pickle(f"{DATA_DIR}/media.pkl"))
 
 if run_offline:
