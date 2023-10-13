@@ -3,6 +3,7 @@ from time import gmtime
 
 from numpy import nan, where
 
+from config import run_offline
 from src.api import create_brand
 from src.constants import amazon_excluded_vendors, to_clearance_map
 from src.util.path_utils import DATA_DIR
@@ -75,5 +76,10 @@ def prepare_df_for_upload(df):
     df["listOnAmazon"] = ~df.BRAND.isin(amazon_excluded_vendors)
 
     df.to_pickle(f"{DATA_DIR}/ready.pkl")
+
+    if not run_offline:
+        for new_brand in df[df.brand == "None"].BRAND.unique():
+            new_brand_id = create_brand(new_brand)
+            df.loc[df.BRAND == new_brand, "brand"] = new_brand_id
 
     return df

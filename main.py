@@ -54,7 +54,7 @@ else:
 
 df = clean_and_filter(df)
 df = build_product_group_structure(df)
-pdf = delete_conflict_products(df, pdf, delete_conflicts=not run_offline)
+pdf = delete_conflict_products(df, pdf)
 df = attach_web_data_to_products(df, pdf)
 df = collect_images_from_product_children(df)
 

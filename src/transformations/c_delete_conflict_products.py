@@ -2,11 +2,12 @@ from glob import glob
 
 from tqdm import tqdm
 
+from config import run_offline
 from src.api import delete_product
 from src.util.path_utils import DATA_DIR
 
 
-def delete_conflict_products(df, pdf, delete_conflicts=False):
+def delete_conflict_products(df, pdf):
     df = df.copy()
     pdf = pdf.copy()
 
@@ -24,8 +25,8 @@ def delete_conflict_products(df, pdf, delete_conflicts=False):
         f"{DATA_DIR}/degenerate_images{num_degenerates}.pkl"
     )
 
-    pdf_changed = False
-    if delete_conflicts:
+    if not run_offline:
+        pdf_changed = False
         bad_ids = degenerates.p_id.dropna().unique().tolist()
         for p_id in tqdm(bad_ids):
             delete_product(p_id)
