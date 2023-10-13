@@ -25,13 +25,10 @@ def delete_conflict_products(df, pdf, delete_conflicts=False):
     )
 
     pdf_changed = False
-    responses = []
     if delete_conflicts:
         bad_ids = degenerates.p_id.dropna().unique().tolist()
         for p_id in tqdm(bad_ids):
-            res = delete_product(p_id)
-            responses.append(res)
-            # this doesn't remove the variants from pdf!!! (or does it)
+            delete_product(p_id)
             pdf = pdf[pdf.p_id != p_id]
             pdf_changed = True
         if pdf_changed:
