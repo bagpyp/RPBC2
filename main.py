@@ -8,7 +8,7 @@ import datetime as dt
 
 import pandas as pd
 
-from config import days_to_update, run_offline
+from config import update_window_hours, apply_changes
 from scripts.quivers import send_to_quivers
 from src.download.orders import (
     process_orders_and_returns,
@@ -38,10 +38,10 @@ from src.util.path_utils import DATA_DIR
 
 start_time = dt.datetime.now()
 print(
-    f"Began {start_time}, processing changes in RetailPro over the last {days_to_update} days..."
+    f"Began {start_time}, processing changes in RetailPro over the last {update_window_hours} hours..."
 )
 
-if run_offline:
+if not apply_changes:
     df = pd.read_pickle(f"{DATA_DIR}/fromECM.pkl")
     pdf = pd.read_pickle(f"{DATA_DIR}/products.pkl")
 
@@ -58,13 +58,13 @@ pdf = delete_conflict_products(df, pdf)
 df = attach_web_data_to_products(df, pdf)
 df = collect_images_from_product_children(df)
 
-if not run_offline:
+if apply_changes:
     persist_web_media(df)
 
 df = df.set_index("sku")
 df.update(pd.read_pickle(f"{DATA_DIR}/media.pkl"))
 
-if run_offline:
+if not apply_changes:
     fileDf = pd.read_pickle(f"{DATA_DIR}/fileDf.pkl")
 else:
     fileDf = build_image_locations_from_file_structure()
@@ -73,7 +73,7 @@ df = df.join(fileDf)
 df = prepare_df_for_upload(df)
 product_payloads_for_update, product_payloads_for_creation = build_payloads(df)
 
-if not run_offline:
+if apply_changes:
     update_products(product_payloads_for_update)
     create_products(product_payloads_for_creation)
     send_to_quivers()

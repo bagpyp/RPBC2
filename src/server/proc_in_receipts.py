@@ -2,7 +2,6 @@ import json
 import os
 import time
 
-from config import drive, stid
 from src.server.invoice.invoice import Invoice
 from src.util.path_utils import DATA_DIR, INVOICES_DIR
 
@@ -13,7 +12,7 @@ def _sid():
     return sid
 
 
-def write_orders_to_ecm(orders, ecm=True, drive=drive, stid=f"{stid}", regular=True):
+def write_orders_to_ecm(orders, ecm=True, regular=True):
     kind = "orders" if regular else "returns"
     order_counts = {}
     for api_source in ["sls", "bc"]:
@@ -45,7 +44,7 @@ def write_orders_to_ecm(orders, ecm=True, drive=drive, stid=f"{stid}", regular=T
             ]
         invoice_xmls = [invoice.to_xml() for invoice in invoices]
         if ecm:
-            path = rf"{drive}:\ECM\Polling\{stid}\PROC\IN\Invoice001.xml"
+            path = r"E:\ECM\Polling\001001A\PROC\IN\Invoice001.xml"
             # write invoice to invoice/
             with open(f"{INVOICES_DIR}/Invoice{_sid()}.xml", "w") as otherFile:
                 otherFile.write(
@@ -79,7 +78,7 @@ def write_orders_to_ecm(orders, ecm=True, drive=drive, stid=f"{stid}", regular=T
                     )
                     + footer
                 )
-            os.system(f"{drive}:\\ECM\\ecmproc -a -in -stid:{stid}")
+            os.system("E:\\ECM\\ecmproc -a -in -stid:001001A")
 
         else:
             with open("Invoice001.xml", "w") as file:

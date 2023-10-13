@@ -1,6 +1,6 @@
 import datetime as dt
 
-from config import days_to_update
+from config import update_window_hours
 from src.upload.create import product_creation_payload
 from src.upload.update import product_update_payload
 
@@ -13,7 +13,8 @@ def build_payloads(df):
     )
     changed_products_gb = gb.filter(
         lambda g: (
-            g.lModified.max() > (dt.datetime.now() - dt.timedelta(days=days_to_update))
+            g.lModified.max()
+            > (dt.datetime.now() - dt.timedelta(hours=update_window_hours))
         )
         & (g.p_id.count() == 1)
     ).groupby("webName", sort=False)

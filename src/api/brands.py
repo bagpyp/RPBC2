@@ -20,6 +20,4 @@ def create_brand(name):
     h = headers.copy()
     h.update({"content-type": "application/json", "accept": "application/json"})
     d = {"name": f"{name}"}
-    res = requests.post(url, headers=h, json=d)
-    if res.ok:
-        return res.json()["data"]["id"]
+    return requests.post(url, headers=h, json=d)

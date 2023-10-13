@@ -2,7 +2,7 @@ from glob import glob
 
 from tqdm import tqdm
 
-from config import run_offline
+from config import apply_changes
 from src.api import delete_product
 from src.util.path_utils import DATA_DIR
 
@@ -25,7 +25,7 @@ def delete_conflict_products(df, pdf):
         f"{DATA_DIR}/degenerate_images{num_degenerates}.pkl"
     )
 
-    if not run_offline:
+    if apply_changes:
         pdf_changed = False
         bad_ids = degenerates.p_id.dropna().unique().tolist()
         for p_id in tqdm(bad_ids):
@@ -33,6 +33,5 @@ def delete_conflict_products(df, pdf):
             pdf = pdf[pdf.p_id != p_id]
             pdf_changed = True
         if pdf_changed:
-            print("Committing pdf changes to products.pkl")
             pdf.to_pickle(f"{DATA_DIR}/products.pkl")
     return pdf

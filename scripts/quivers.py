@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import paramiko
 
-from config import qftp
+from config import quivers_config
 from src.util.path_utils import DATA_DIR
 
 brands = [
@@ -34,10 +34,10 @@ def send_to_quivers():
 
     qdf.to_csv(fname, index=False)
 
-    host = qftp["address"]
+    host = quivers_config["address"]
     port = 22
-    password = qftp["password"]
-    username = qftp["username"]
+    password = quivers_config["password"]
+    username = quivers_config["username"]
 
     with paramiko.Transport((host, port)) as transport:
         transport.connect(username=username, password=password)

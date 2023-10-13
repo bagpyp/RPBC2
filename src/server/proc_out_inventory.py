@@ -5,16 +5,15 @@ from xml.etree import ElementTree as ET
 import pandas as pd
 from numpy import nan
 
-from config import drive, stid
 from src.util.path_utils import DATA_DIR
 
 
-def read_ecm_data_into_dataframe(drive=drive, stid=stid):
+def read_ecm_data_into_dataframe():
     print("Pulling data from ECM on the server via PROC OUT")
-    os.system(f"{drive}:\\ECM\\ecmproc -out -a -stid:{stid}")
+    os.system("E:\\ECM\\ecmproc -out -a -stid:001001A")
     # parse inventory xml files and build a list of 'items'
     invns = []
-    for file in glob(rf"{drive}:\ECM\Polling\{stid}\OUT\Inventory*"):
+    for file in glob(r"E:\ECM\Polling\001001A\OUT\Inventory*"):
         invns.extend(ET.parse(file).getroot().findall("./INVENTORYS/INVENTORY"))
 
     # turn each item into a dictionary
@@ -26,7 +25,7 @@ def read_ecm_data_into_dataframe(drive=drive, stid=stid):
             inventory.update(i.attrib)
             for j in i:
                 inventory.update(j.attrib)
-                # price, qty and udf uniquesness of keys
+                # price, qty and udf uniqueness of keys
                 saw_store = False
                 for n, k in enumerate(j):
                     for x, y in k.attrib.items():
@@ -36,7 +35,7 @@ def read_ecm_data_into_dataframe(drive=drive, stid=stid):
                             inventory.update({x + f"_{n + 1}": y})
                     if not saw_store:
                         inventory.update({"qty_2": "0"})
-        # only actuve product
+        # only active product
         if inventory["active"] == "1":
             inventorys.append(inventory)
 
@@ -47,7 +46,7 @@ def read_ecm_data_into_dataframe(drive=drive, stid=stid):
     # vendors extracted as dictionary
     v_names = {
         v.attrib["vend_code"]: v.attrib["vend_name"]
-        for v in ET.parse(rf"{drive}:\ECM\Polling\{stid}\OUT\Vendor.xml")
+        for v in ET.parse(r"E:\ECM\Polling\001001A\OUT\Vendor.xml")
         .getroot()
         .findall("VENDORS/VENDOR")
     }
@@ -58,7 +57,7 @@ def read_ecm_data_into_dataframe(drive=drive, stid=stid):
         pd.DataFrame(
             [
                 cat.attrib
-                for cat in ET.parse(rf"{drive}:\ECM\Polling\{stid}\OUT\DCS.xml")
+                for cat in ET.parse(r"E:\ECM\Polling\001001A\OUT\DCS.xml")
                 .getroot()
                 .findall("DCSS/DCS")
             ]
@@ -81,7 +80,7 @@ def read_ecm_data_into_dataframe(drive=drive, stid=stid):
         + cats.s_name.str.strip().str.title()
     ).str.strip("/")
 
-    # mergo on `dcs_code`
+    # merge on `dcs_code`
     df = df.merge(cats, on="dcs_code")
 
     # naming map for df
