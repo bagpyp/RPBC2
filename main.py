@@ -36,44 +36,50 @@ from src.upload.create import create_products
 from src.upload.update import update_products
 from src.util.path_utils import DATA_DIR
 
-start_time = dt.datetime.now()
-print(
-    f"Began {start_time}, processing changes in RetailPro over the last {update_window_hours} hours..."
-)
 
-if not apply_changes:
-    df = pd.read_pickle(f"{DATA_DIR}/fromECM.pkl")
-    pdf = pd.read_pickle(f"{DATA_DIR}/products.pkl")
+def main():
+    start_time = dt.datetime.now()
+    print(
+        f"Began {start_time}, processing changes in RetailPro over the last {update_window_hours} hours..."
+    )
 
-else:
-    process_orders_and_returns()
-    df = read_ecm_data_into_dataframe()
-    pdf = get_all_product_data_from_big_commerce()
-    download_brand_ids()
-    download_category_ids()
+    if not apply_changes:
+        df = pd.read_pickle(f"{DATA_DIR}/fromECM.pkl")
+        pdf = pd.read_pickle(f"{DATA_DIR}/products.pkl")
 
-df = clean_and_filter(df)
-df = build_product_group_structure(df)
-pdf = delete_conflict_products(df, pdf)
-df = attach_web_data_to_products(df, pdf)
-df = collect_images_from_product_children(df)
+    else:
+        process_orders_and_returns()
+        df = read_ecm_data_into_dataframe()
+        pdf = get_all_product_data_from_big_commerce()
+        download_brand_ids()
+        download_category_ids()
 
-if apply_changes:
-    persist_web_media(df)
+    df = clean_and_filter(df)
+    df = build_product_group_structure(df)
+    pdf = delete_conflict_products(df, pdf)
+    df = attach_web_data_to_products(df, pdf)
+    df = collect_images_from_product_children(df)
 
-df = df.set_index("sku")
-df.update(pd.read_pickle(f"{DATA_DIR}/media.pkl"))
+    if apply_changes:
+        persist_web_media(df)
 
-if not apply_changes:
-    fileDf = pd.read_pickle(f"{DATA_DIR}/fileDf.pkl")
-else:
-    fileDf = build_image_locations_from_file_structure()
+    df = df.set_index("sku")
+    df.update(pd.read_pickle(f"{DATA_DIR}/media.pkl"))
 
-df = df.join(fileDf)
-df = prepare_df_for_upload(df)
-product_payloads_for_update, product_payloads_for_creation = build_payloads(df)
+    if not apply_changes:
+        file_structure_df = pd.read_pickle(f"{DATA_DIR}/fileDf.pkl")
+    else:
+        file_structure_df = build_image_locations_from_file_structure()
 
-if apply_changes:
-    update_products(product_payloads_for_update)
-    create_products(product_payloads_for_creation)
-    send_to_quivers()
+    df = df.join(file_structure_df)
+    df = prepare_df_for_upload(df)
+    product_payloads_for_update, product_payloads_for_creation = build_payloads(df)
+
+    if apply_changes:
+        update_products(product_payloads_for_update)
+        create_products(product_payloads_for_creation)
+        send_to_quivers()
+
+
+if __name__ == "__main__":
+    main()
