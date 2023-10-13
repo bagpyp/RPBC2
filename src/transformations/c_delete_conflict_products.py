@@ -1,5 +1,3 @@
-from glob import glob
-
 from tqdm import tqdm
 
 from config import apply_changes
@@ -18,12 +16,10 @@ def delete_conflict_products(df, pdf):
     degenerates = degenerates[cols]
 
     image_cols = ["v_sku", "v_image_url"] + [f"image_{i}" for i in range(5)]
+    # TODO: use this df to download images into images/variant
+    #  (replace 0- or 2- with 1-) before deleting the product
+    #  because that also deletes the images! ask ryan steffey
     images_from_degenerates = degenerates[degenerates["v_image_url"] != ""][image_cols]
-
-    num_degenerates = len(glob(f"{DATA_DIR}/degenerate_images*"))
-    images_from_degenerates.to_pickle(
-        f"{DATA_DIR}/degenerate_images{num_degenerates}.pkl"
-    )
 
     if apply_changes:
         pdf_changed = False
