@@ -5,7 +5,7 @@ images
 data
 logs
 
-src/constants
+src/constants/channel_maps.py
 
 .vscode
 .idea
