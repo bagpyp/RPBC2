@@ -1,6 +1,7 @@
 import requests
 
 from config import headers, base
+from src.api.request_utils import call_iteratively
 
 
 def get_product_id_by_sku(sku):
@@ -26,3 +27,8 @@ def _get_products(i=1):
     )
     res = requests.get(url, headers=headers)
     return res
+
+
+def get_all_products():
+    data = call_iteratively(_get_products())
+    return data

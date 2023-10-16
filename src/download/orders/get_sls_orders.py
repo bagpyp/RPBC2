@@ -1,6 +1,6 @@
 import json
 
-from src.api.orders.sideline_swap import get_sls_orders
+from src.api import get_sls_orders
 from src.util.path_utils import DATA_DIR
 
 
