@@ -6,7 +6,7 @@ from numpy import nan, where
 from config import apply_changes
 from src.api import create_brand
 from src.constants import amazon_excluded_vendors, to_clearance_map
-from src.util.path_utils import DATA_DIR
+from src.util import DATA_DIR
 
 
 def prepare_df_for_upload(df):

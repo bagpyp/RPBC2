@@ -3,7 +3,7 @@ from glob import glob
 import pandas as pd
 import requests
 
-from src.util.path_utils import IMAGES_DIR, DATA_DIR
+from src.util import IMAGES_DIR, DATA_DIR
 
 
 def persist_web_media(df):

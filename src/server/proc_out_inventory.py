@@ -5,7 +5,7 @@ from xml.etree import ElementTree as ET
 import pandas as pd
 from numpy import nan
 
-from src.util.path_utils import DATA_DIR
+from src.util import DATA_DIR
 
 
 def read_ecm_data_into_dataframe():

@@ -1,7 +1,7 @@
 import requests
 
 from config import base, headers
-from src.api.request_utils import call_iteratively
+from src.util import call_iteratively
 
 
 def _get_brand_ids(i=1):

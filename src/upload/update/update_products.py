@@ -3,7 +3,7 @@ from time import sleep
 from tqdm import tqdm
 
 from src.api import update_product, update_custom_field
-from src.util.path_utils import LOGS_DIR
+from src.util import LOGS_DIR
 
 
 def update_products(payloads):

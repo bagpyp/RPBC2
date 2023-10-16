@@ -4,7 +4,7 @@ from xml.etree import ElementTree as ET
 
 import pandas as pd
 
-from src.util.path_utils import DATA_DIR
+from src.util import DATA_DIR
 from .base_items import base_items
 from .comments import comments
 from .customer_attrib import customer_attrib

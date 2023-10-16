@@ -2,7 +2,7 @@ from tqdm import tqdm
 
 from config import apply_changes
 from src.api import delete_product
-from src.util.path_utils import DATA_DIR
+from src.util import DATA_DIR
 
 
 def delete_conflict_products(df, pdf):

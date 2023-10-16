@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 from src.api import update_custom_field, get_all_brand_ids
 from src.constants import amazon_excluded_vendors
-from src.util.path_utils import DATA_DIR
+from src.util import DATA_DIR
 
 # TODO: should replace with json load
 big_commerce_brands = get_all_brand_ids()

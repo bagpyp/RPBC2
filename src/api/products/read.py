@@ -1,7 +1,7 @@
 import requests
 
 from config import headers, base
-from src.api.request_utils import call_iteratively
+from src.util import call_iteratively
 
 
 def get_product_id_by_sku(sku):

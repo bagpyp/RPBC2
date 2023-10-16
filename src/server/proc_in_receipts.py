@@ -5,7 +5,7 @@ import time
 import pandas as pd
 
 from src.server.invoice.invoice import Invoice
-from src.util.path_utils import DATA_DIR, INVOICES_DIR
+from src.util import DATA_DIR, INVOICES_DIR
 
 
 def _sid():

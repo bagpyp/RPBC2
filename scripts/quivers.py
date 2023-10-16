@@ -5,7 +5,7 @@ import pandas as pd
 import paramiko
 
 from config import quivers_config
-from src.util.path_utils import DATA_DIR
+from src.util import DATA_DIR
 
 brands = [
     "Marker USA",

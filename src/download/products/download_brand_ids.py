@@ -1,7 +1,7 @@
 import json
 
 from src.api import get_all_brand_ids
-from src.util.path_utils import DATA_DIR
+from src.util import DATA_DIR
 
 
 def download_brand_ids():

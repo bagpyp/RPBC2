@@ -2,7 +2,7 @@ from glob import glob
 
 import pandas as pd
 
-from src.util.path_utils import IMAGES_DIR, DATA_DIR
+from src.util import IMAGES_DIR, DATA_DIR
 
 
 def build_image_locations_from_file_structure():

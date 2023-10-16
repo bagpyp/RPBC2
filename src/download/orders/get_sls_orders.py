@@ -1,7 +1,7 @@
 import json
 
 from src.api import get_sls_orders
-from src.util.path_utils import DATA_DIR
+from src.util import DATA_DIR
 
 
 def pull_orders_from_sideline_swap(kind="orders"):

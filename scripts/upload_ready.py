@@ -2,9 +2,8 @@ import pandas as pd
 
 # from scripts.quivers import send_to_quivers
 from src.transformations import build_payloads
-
 # from src.upload.update import update_products
-from src.util.path_utils import DATA_DIR
+from src.util import DATA_DIR
 
 
 # from src.upload.create import create_products

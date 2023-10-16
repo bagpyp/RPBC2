@@ -1,7 +1,7 @@
 import pandas as pd
 from numpy import nan
 
-from src.util.path_utils import DATA_DIR
+from src.util import DATA_DIR
 
 
 def _restructure_product_group(group):

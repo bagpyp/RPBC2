@@ -6,7 +6,7 @@ import requests
 
 from config import headers
 from src.api import get_big_commerce_orders
-from src.util.path_utils import DATA_DIR
+from src.util import DATA_DIR
 
 
 def pull_orders_from_big_commerce(kind="orders"):

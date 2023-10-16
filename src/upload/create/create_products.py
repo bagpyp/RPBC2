@@ -16,7 +16,7 @@ from src.api import (
     update_custom_field,
 )
 from src.constants import to_ebay_map
-from src.util.path_utils import DATA_DIR, LOGS_DIR, IMAGES_DIR
+from src.util import DATA_DIR, LOGS_DIR, IMAGES_DIR
 
 
 def create_products(payloads):

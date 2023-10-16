@@ -1,7 +1,7 @@
 import pandas as pd
 
 from src.api.products.read import get_all_products
-from src.util.path_utils import DATA_DIR
+from src.util import DATA_DIR
 
 
 def get_all_product_data_from_big_commerce():

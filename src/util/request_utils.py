@@ -8,7 +8,7 @@ def call_iteratively(call, *args):
     if res.status_code == 429:
         s = int(res.headers["X-Rate-Limit-Time-Reset-Ms"]) / 1000
         time.sleep(s)
-        retry_request_using_response(res)
+        _retry_request_using_response(res)
     elif res.ok:
         j = res.json()
         data = j["data"]
@@ -20,7 +20,7 @@ def call_iteratively(call, *args):
         return data
 
 
-def retry_request_using_response(original_response, max_retries=2, retry_delay=0.1):
+def _retry_request_using_response(original_response, max_retries=2, retry_delay=0.1):
     original_request = original_response.request
     for i in range(max_retries):
         try:

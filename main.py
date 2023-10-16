@@ -36,7 +36,7 @@ from src.transformations import (
 )
 from src.upload.create import create_products
 from src.upload.update import update_products
-from src.util.path_utils import DATA_DIR, LOGS_DIR
+from src.util import DATA_DIR, LOGS_DIR
 
 
 def main():
