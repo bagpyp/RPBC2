@@ -1,2 +1,2 @@
-from .big_commerce import get_big_commerce_orders
-from .sideline_swap import get_sls_orders
+from .get_bc_orders import get_bc_orders
+from .get_sls_orders import get_sls_orders

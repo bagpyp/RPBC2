@@ -10,3 +10,4 @@ src/constants
 .vscode
 .idea
 __pycache__
+qodana.yaml

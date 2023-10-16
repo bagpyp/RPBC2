@@ -5,26 +5,13 @@ from json import JSONDecodeError
 import requests
 
 from config import headers
-from src.api.orders import get_big_commerce_orders
+from src.api.orders import get_bc_orders
 from src.util import DATA_DIR
 
 
 def pull_orders_from_big_commerce(kind="orders"):
     print(f"Pulling new {kind} from BigCommerce...")
-    status_ids = []
-    if kind == "orders":
-        status_ids = [2, 7, 9, 10, 11, 12]
-    elif kind == "returns":
-        status_ids = [4, 5]
-
-    orders = []
-    for status_id in status_ids:
-        n = 1
-        while get_big_commerce_orders(status_id, i=n).text:
-            nth_orders = get_big_commerce_orders(status_id, i=n).json()
-            orders.extend(nth_orders)
-            n += 1
-    orders = sorted(orders, key=lambda k: int(k["id"]))
+    orders = get_bc_orders(kind=kind)
 
     with open(f"{DATA_DIR}/bc_{kind}.json") as file:
         # SOME OF THESE MIGHT NOW BE RETURNS, AND NOT IN `orders`

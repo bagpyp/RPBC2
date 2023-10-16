@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.api.products.read import get_all_products
+from src.api.products.get_all_products import get_all_products
 from src.util import DATA_DIR
 
 
