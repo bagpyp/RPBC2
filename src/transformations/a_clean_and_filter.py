@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.constants import category_map
+from src.constants import dcs_name_to_bc_category
 
 
 def clean_and_filter(df):
@@ -45,7 +45,7 @@ def clean_and_filter(df):
     df = df[~df.DCS.str.match(r"(SER|REN|USD)")]
 
     # map the rest of the categories, map null to Misc
-    df.CAT = df.CAT.map(category_map).fillna("Misc")
+    df.CAT = df.CAT.map(dcs_name_to_bc_category).fillna("Misc")
 
     # filters products without UPCs w/ length 11, 12 or 13.
     df = df[df.UPC.str.len().isin([11, 12, 13])]

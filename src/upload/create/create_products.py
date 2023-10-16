@@ -15,7 +15,7 @@ from src.api.products import (
     get_product_id_by_name,
     update_custom_field,
 )
-from src.constants import to_ebay_map
+from src.constants import bc_category_id_to_ebay_category_id
 from src.util import DATA_DIR, LOGS_DIR, IMAGES_DIR
 
 
@@ -106,7 +106,9 @@ def create_products(payloads):
             update_custom_field(
                 p_id,
                 "eBay Category ID",
-                bc_category if bc_category in to_ebay_map else "0",
+                bc_category
+                if bc_category in bc_category_id_to_ebay_category_id
+                else "0",
             )
 
         else:

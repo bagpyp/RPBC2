@@ -1,4 +1,4 @@
-category_map = {
+dcs_name_to_bc_category = {
     "Disc Golf/Bag": "Misc",
     "Electronic/Audio": "Misc",
     "Electronic/Camera/Accessory": "Misc",
@@ -181,48 +181,8 @@ category_map = {
     "Clearance/Water Sports": "Clearance/Water Sports",
     "Clearance/X-Country": "Clearance/X-Country",
 }
-clearance_map = {
-    "CLBAXE": "Clearance/Climbing",
-    "CLBBOO": "Clearance/Climbing",
-    "CLBCRA": "Clearance/Climbing",
-    "CLBHEL": "Clearance/Climbing",
-    "CLBPRT": "Clearance/Climbing",
-    "EYEGOG": "Clearance/Headwear",
-    "HEL": "Clearance/Headwear",
-    "KAYADU": "Clearance/Water Sports",
-    "LIFADU": "Clearance/Water Sports",
-    "OUTJKT": "Clearance/Outerwear",
-    "OUTPNT": "Clearance/Outerwear",
-    "SAFHEL": "Clearance/Headwear",
-    "SKI": "Clearance/Ski",
-    "SKIADU": "Clearance/Ski",
-    "SKIBIN": "Clearance/Ski/Bindings",
-    "SKIBND": "Clearance/Ski/Bindings",
-    "SKIBOO": "Clearance/Ski/Boots",
-    "SKIDEM": "Clearance/Ski",
-    "SKIPOL": "Clearance/Ski",
-    "SKISKI": "Clearance/Ski",
-    "SKIYOU": "Clearance/Ski/Youth",
-    "SNBADU": "Clearance/Snowboard",
-    "SNBBND": "Clearance/Snowboard",
-    "SNBBOO": "Clearance/Snowboard/Boots",
-    "SNBBRD": "Clearance/Snowboard",
-    "SNBDEM": "Clearance/Snowboard",
-    "SNBYOU": "Clearance/Snowbaord/Youth",
-    "SNO": "Clearance/Snowshoe",
-    "SNOBOO": "Clearance/Snowshoe",
-    "SNOYOU": "Clearance/Snowshoe/Youth",
-    "SUPADU": "Clearance/SUP",
-    "WAKBRD": "Clearance/Water Sports",
-    "WAKDEM": "Clearance/Water Sports",
-    "WAKWSF": "Clearance/Water Sports",
-    "WATSKI": "Clearance/Water Sports",
-    "WATWAK": "Clearance/Water Sports",
-    "XCSBOO": "Clearance/X-Country",
-    "XCSPOL": "Clearance/X-Country",
-    "XCSSKI": "Clearance/X-Country",
-}
-to_clearance_map = {
+
+category_id_to_associated_clearance_category_id = {
     "6916": "6916",
     "6952": "7063",
     "7033": "7107",
@@ -351,7 +311,8 @@ to_clearance_map = {
     "6971": "7189",
     "6980": "7106",
 }
-to_ebay_map = {
+
+bc_category_id_to_ebay_category_id = {
     "7033": "42814",
     "7021": "42814",
     "6953": "42814",

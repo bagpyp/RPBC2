@@ -5,7 +5,10 @@ from numpy import nan, where
 
 from config import apply_changes
 from src.api.brands import create_brand
-from src.constants import amazon_excluded_vendors, to_clearance_map
+from src.constants import (
+    amazon_excluded_vendors,
+    category_id_to_associated_clearance_category_id,
+)
 from src.util import DATA_DIR
 
 
@@ -89,7 +92,9 @@ def prepare_df_for_upload(df):
 
     df["is_old"] = df.webName.str.contains("|".join(old))
     df["clearance_cat"] = where(
-        df.webName.str.contains("|".join(old)), df.cat.map(to_clearance_map), ""
+        df.webName.str.contains("|".join(old)),
+        df.cat.map(category_id_to_associated_clearance_category_id),
+        "",
     )
 
     df = df[df.brand != ""]

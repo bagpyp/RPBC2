@@ -1,2 +1,2 @@
-from .proc_in_receipts import write_orders_to_ecm, write_returns_to_ecm
-from .proc_out_inventory import read_ecm_data_into_dataframe
+from .read_ecm_data_into_dataframe import read_ecm_data_into_dataframe
+from .write_orders_to_ecm import write_orders_to_ecm, write_returns_to_ecm

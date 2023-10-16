@@ -4,7 +4,7 @@ from src.api.products.get_all_products import get_all_products
 from src.util import DATA_DIR
 
 
-def get_all_product_data_from_big_commerce():
+def pull_product_data_from_big_commerce():
     print("Pulling product data from BigCommerce...")
 
     data = get_all_products()

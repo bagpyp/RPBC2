@@ -1,5 +1,5 @@
 # prefixes for `comment 1` in Retail Pro receipts
-prefix_map = {
+channel_name_to_prefix = {
     "EBAY": "EBAY",
     "GOOGLE": "GOOGLE",
     "SIDELINE": "SLS",
@@ -15,7 +15,7 @@ prefix_map = {
 
 # employee ids for `associate` field in Retail Pro
 # indicates who is responsible for the sale
-assoc_map = {
+channel_name_to_employee_id = {
     "EBAY": "122",
     "GOOGLE": "129",
     "SIDELINE": "113",
@@ -30,7 +30,7 @@ assoc_map = {
 }
 
 # customer charged on receipt (based on payment processor)
-customer_data = {
+payment_zone_name_to_rp_ids = {
     "Authorize.Net": {"sid": "6006417736096747516", "id": "1010176"},
     "PayPal": {"sid": "791550355979724528", "id": "28207"},
     "SidelineSwap": {"sid": "5757614230247772156", "id": "1008618"},

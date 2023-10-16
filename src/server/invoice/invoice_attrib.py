@@ -1,6 +1,6 @@
 import datetime as dt
 
-from src.constants import customer_data
+from src.constants import payment_zone_name_to_rp_ids
 
 
 def times(time, regular=True):
@@ -40,7 +40,7 @@ def invoice_attrib(order, no, invc_sid_top, regular=True):
         # TODO invc_no =
         status="0",
         proc_status="0",
-        cust_sid=customer_data[order["payment_zone"]]["sid"],
+        cust_sid=payment_zone_name_to_rp_ids[order["payment_zone"]]["sid"],
         addr_no="1",
         workstation="3",
         orig_store_no="1",

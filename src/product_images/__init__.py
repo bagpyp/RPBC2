@@ -1,2 +1,4 @@
-from .archive_and_pickle import persist_web_media
-from .read_archive import build_image_locations_from_file_structure
+from .build_image_locations_from_file_structure import (
+    build_image_locations_from_file_structure,
+)
+from .persist_web_media import persist_web_media

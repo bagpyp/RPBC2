@@ -12,7 +12,7 @@ from config import update_window_hours, apply_changes, sync_sideline_swap
 from scripts.quivers import send_to_quivers
 from src.download.orders import get_all_orders, get_all_returns
 from src.download.products import (
-    get_all_product_data_from_big_commerce,
+    pull_product_data_from_big_commerce,
     download_brand_ids,
     download_category_ids,
 )
@@ -58,7 +58,7 @@ def main():
 
         df = read_ecm_data_into_dataframe()
 
-        pdf = get_all_product_data_from_big_commerce()
+        pdf = pull_product_data_from_big_commerce()
         download_brand_ids()
         download_category_ids()
 
