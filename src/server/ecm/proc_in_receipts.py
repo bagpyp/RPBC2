@@ -2,6 +2,8 @@ import json
 import os
 import time
 
+import pandas as pd
+
 from src.server.invoice.invoice import Invoice
 from src.util.path_utils import DATA_DIR, INVOICES_DIR
 
@@ -89,3 +91,15 @@ def write_orders_to_ecm(orders, ecm=True, regular=True):
                     )
                     + footer
                 )
+
+
+def write_returns_to_ecm(all_new_returns):
+    written_receipts = pd.read_csv(f"{INVOICES_DIR}/written.csv")
+    written_receipt_ids = written_receipts.comment1.apply(
+        lambda x: x.split(" ")[1]
+    ).tolist()
+    write_orders_to_ecm(
+        [ret for ret in all_new_returns if str(ret.get("id")) in written_receipt_ids],
+        # meaning the receipt is of type `return`
+        regular=False,
+    )

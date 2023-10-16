@@ -8,11 +8,9 @@ import datetime as dt
 
 import pandas as pd
 
-from config import update_window_hours, apply_changes
+from config import update_window_hours, apply_changes, sync_sideline_swap
 from scripts.quivers import send_to_quivers
-from src.download.orders import (
-    process_orders_and_returns,
-)
+from src.download.orders import get_all_orders, get_all_returns
 from src.download.products import (
     get_all_product_data_from_big_commerce,
     download_brand_ids,
@@ -22,7 +20,11 @@ from src.product_images import (
     build_image_locations_from_file_structure,
     persist_web_media,
 )
-from src.server import read_ecm_data_into_dataframe
+from src.server import (
+    read_ecm_data_into_dataframe,
+    write_orders_to_ecm,
+    write_returns_to_ecm,
+)
 from src.transformations import (
     attach_web_data_to_products,
     build_payloads,
@@ -48,8 +50,14 @@ def main():
         pdf = pd.read_pickle(f"{DATA_DIR}/products.pkl")
 
     else:
-        process_orders_and_returns()
+        all_new_orders = get_all_orders(sync_sideline_swap)
+        write_orders_to_ecm(all_new_orders)
+
+        all_new_returns = get_all_returns(sync_sideline_swap)
+        write_returns_to_ecm(all_new_returns)
+
         df = read_ecm_data_into_dataframe()
+
         pdf = get_all_product_data_from_big_commerce()
         download_brand_ids()
         download_category_ids()

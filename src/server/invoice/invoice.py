@@ -4,14 +4,14 @@ from xml.etree import ElementTree as ET
 
 import pandas as pd
 
-from src.server.invoice.base_items import base_items
-from src.server.invoice.comments import comments
-from src.server.invoice.customer_attrib import customer_attrib
-from src.server.invoice.fee_attrib import fee_attrib
-from src.server.invoice.invc_items import invc_items
-from src.server.invoice.invoice_attrib import invoice_attrib
-from src.server.invoice.tender_attrib import tender_attrib
 from src.util.path_utils import DATA_DIR
+from .base_items import base_items
+from .comments import comments
+from .customer_attrib import customer_attrib
+from .fee_attrib import fee_attrib
+from .invc_items import invc_items
+from .invoice_attrib import invoice_attrib
+from .tender_attrib import tender_attrib
 
 
 def _sid():
