@@ -30,5 +30,5 @@ def _get_products(i=1):
 
 
 def get_all_products():
-    data = call_iteratively(_get_products())
+    data = call_iteratively(_get_products)
     return data
