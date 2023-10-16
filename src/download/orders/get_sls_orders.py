@@ -1,6 +1,6 @@
 import json
 
-from src.api import get_sls_orders
+from src.api.orders import get_sls_orders
 from src.util import DATA_DIR
 
 

@@ -1,7 +1,7 @@
 from tqdm import tqdm
 
 from config import apply_changes
-from src.api import delete_product
+from src.api.products import delete_product
 from src.util import DATA_DIR
 
 
@@ -19,7 +19,7 @@ def delete_conflict_products(df, pdf):
     # TODO: use this df to download images into images/variant
     #  (replace 0- or 2- with 1-) before deleting the product
     #  because that also deletes the images! ask ryan steffey
-    images_from_degenerates = degenerates[degenerates["v_image_url"] != ""][image_cols]
+    # images_from_degenerates = degenerates[degenerates["v_image_url"] != ""][image_cols]
 
     if apply_changes:
         pdf_changed = False

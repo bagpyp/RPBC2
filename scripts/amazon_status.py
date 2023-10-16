@@ -2,7 +2,8 @@ import pandas as pd
 from numpy import where
 from tqdm import tqdm
 
-from src.api import update_custom_field, get_all_brand_ids
+from src.api.brands import get_all_brand_ids
+from src.api.products import update_custom_field
 from src.constants import amazon_excluded_vendors
 from src.util import DATA_DIR
 

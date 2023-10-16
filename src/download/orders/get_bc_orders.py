@@ -5,7 +5,7 @@ from json import JSONDecodeError
 import requests
 
 from config import headers
-from src.api import get_big_commerce_orders
+from src.api.orders import get_big_commerce_orders
 from src.util import DATA_DIR
 
 

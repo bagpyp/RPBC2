@@ -4,7 +4,7 @@ from time import gmtime
 from numpy import nan, where
 
 from config import apply_changes
-from src.api import create_brand
+from src.api.brands import create_brand
 from src.constants import amazon_excluded_vendors, to_clearance_map
 from src.util import DATA_DIR
 

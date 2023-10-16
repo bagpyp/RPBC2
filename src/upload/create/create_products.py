@@ -8,7 +8,7 @@ import pandas as pd
 from numpy import nan
 from tqdm import tqdm
 
-from src.api import (
+from src.api.products import (
     create_product,
     get_product_id_by_sku,
     delete_product,

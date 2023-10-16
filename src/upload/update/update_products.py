@@ -2,7 +2,7 @@ from time import sleep
 
 from tqdm import tqdm
 
-from src.api import update_product, update_custom_field
+from src.api.products import update_product, update_custom_field
 from src.util import LOGS_DIR
 
 

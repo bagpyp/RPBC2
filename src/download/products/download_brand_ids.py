@@ -1,6 +1,6 @@
 import json
 
-from src.api import get_all_brand_ids
+from src.api.brands import get_all_brand_ids
 from src.util import DATA_DIR
 
 
