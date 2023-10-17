@@ -27,15 +27,14 @@ from src.server import (
 )
 from src.transformations import (
     attach_web_data_to_products,
-    build_payloads,
     build_product_group_structure,
     clean_and_filter,
     collect_images_from_product_children,
     prepare_df_for_upload,
     delete_conflict_products,
 )
-from src.upload.create import create_products
-from src.upload.update import update_products
+from src.upload.create import create_products, build_create_payloads
+from src.upload.update import update_products, build_update_payloads
 from src.util import DATA_DIR, LOGS_DIR
 
 
@@ -82,7 +81,8 @@ def main():
     df = df.join(file_structure_df)
     df = prepare_df_for_upload(df)
 
-    product_payloads_for_update, product_payloads_for_creation = build_payloads(df)
+    product_payloads_for_update = build_update_payloads(df)
+    product_payloads_for_creation = build_create_payloads(df)
 
     if apply_changes:
         update_products(product_payloads_for_update)

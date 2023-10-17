@@ -1,4 +1,31 @@
-def product_update_payload(g):
+import datetime as dt
+
+from config import update_window_hours
+
+
+def build_update_payloads(df):
+    gb = df.groupby("webName")
+
+    changed_products_gb = gb.filter(
+        lambda g: (
+            g.lModified.max()
+            > (dt.datetime.now() - dt.timedelta(hours=update_window_hours))
+        )
+        & (g.p_id.count() == 1)
+    ).groupby("webName", sort=False)
+
+    product_payloads_for_update = []
+    for name, g in changed_products_gb:
+        try:
+            product_payloads_for_update.append(_product_update_payload(g))
+        except Exception:
+            print("Couldn't create update payload for", name)
+            continue
+
+    return product_payloads_for_update
+
+
+def _product_update_payload(g):
     product = {}
     g = g.fillna("").to_dict("records")
     r = g[0]

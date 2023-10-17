@@ -1,2 +1,2 @@
 from .create_products import create_products
-from .product_creation_payload import product_creation_payload
+from .build_create_payloads import build_create_payloads

@@ -1,4 +1,22 @@
-def product_creation_payload(g):
+def build_create_payloads(df):
+    gb = df.groupby("webName")
+
+    new_products_gb = gb.filter(lambda g: g.p_id.count() == 0).groupby(
+        "webName", sort=False
+    )
+
+    product_payloads_for_creation = []
+    for name, g in new_products_gb:
+        try:
+            product_payloads_for_creation.append(_product_creation_payload(g))
+        except Exception:
+            print("Couldn't create creation payload for", name)
+            continue
+
+    return product_payloads_for_creation
+
+
+def _product_creation_payload(g):
     product = {}
     g = g.fillna("").to_dict("records")
     r = g[0]

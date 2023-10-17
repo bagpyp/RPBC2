@@ -4,4 +4,3 @@ from .c_delete_conflict_products import delete_conflict_products
 from .d_attach_web_data_to_products import attach_web_data_to_products
 from .e_collect_images_from_product_children import collect_images_from_product_children
 from .f_prepare_df_for_upload import prepare_df_for_upload
-from .g_build_payloads import build_payloads
