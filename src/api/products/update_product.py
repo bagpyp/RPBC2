@@ -5,7 +5,7 @@ import requests
 from config import headers, base
 
 
-def update_product(id_, data, slow=False):
+def update_product(id_, data):
     responses = []
     url = base + f"v3/catalog/products/{id_}"
     h = headers.copy()
@@ -18,12 +18,9 @@ def update_product(id_, data, slow=False):
         res = requests.put(url, headers=h, json=data)
         responses.append(res)
         for variant_data in variants:
+            time.sleep(0.01)
             variant_url = url + f"/variants/{variant_data.pop('id')}"
             res = requests.put(variant_url, headers=h, json=variant_data)
-            if slow:
-                time.sleep(1)
-            else:
-                time.sleep(0.1)
             # don't return variant not found res in res array
             # TODO: why tf not?
             if res.status_code != 404:
