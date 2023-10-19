@@ -1,52 +1,10 @@
 # Listing on Amazon
 
-Excluded Vendors
- - 686
- - Arbor Snowboards
- - Arcade Belts
- - Bronson Speed Co.
- - Bullet
- - Burton
- - Capita
- - Crab Grab
- - Creature
- - Darn Tough
- - Gnu
- - Havaianas
- - Helly Hansen
- - Hestra
- - Hot Chillys
- - Hydro Flask
- - Independent
- - Lib Technologies
- - Marmot
- - Nike
- - OJ III
- - PIT VIPER
- - Picture Organic Clothing
- - RVCA
- - Reef
- - Ricta
- - Salomon Ski
- - Santa Cruz
- - Smartwool
- - Smith
- - Spyder Active Sports
- - Stance
- - Sun Bum
- - The North Face
- - Theragun
- - Turtle Fur
- - Under Armour
- - Union Binding Company
- - Vans
- - Wolfgang
-
 
 1. As of 9/25, everything in our Amazon catalog has a qty level that has not been updated with store diffs.
 2. Before we turn off vacation mode, we should take the entire Amazon Catalog qty to zero, then enable just Ski Poles 
 
-Becuase we sell 1/2 a day and usually have 5+ ea
+Because we sell 1/2 a day and usually have 5+ ea
 
 
 Exclude Vendors
@@ -64,18 +22,14 @@ Amazon has a loader template
 		>= 20 gets 'prime' ($free.99)
 
 AMTU runs every 15 minutes
-The AMTU software never created brand new listings from scratch
+The AMTU software never created brand-new listings from scratch
 Instead, items would be added to our catalog if their ASIN already existed in Amazon
 The AMTU also would not create new listings in our catalog,m even if the ASIN did exist, unless we first manually added those ASINs to our catalog
-All the AMTU did was update price and quanity of items already in our Catalog, based on lastEditDate
+All the AMTU did was update price and quantity of items already in our Catalog, based on lastEditDate
 The AMTU would also download an "order file" at the end of execution
 
 A separate program, RDIce would consume the order file and PROC in receipts to Retail Pro
-RDIce would then also filter for all items with a last_edit_date <= 15 minutes ago, generate a .ttd file contatning:
+RDIce would then also filter for all items with a last_edit_date <= 15 minutes ago, generate a .ttd file containing:
 sku, Amazon price, quantity
 
-Now, Quatity, UPC, SKU and Price will all be managed by Codisto
-
-
-
-
+Now, Quantity, UPC, SKU and Price will all be managed by Codisto

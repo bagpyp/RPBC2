@@ -6,7 +6,7 @@ The payments for these orders belong in different places depending on how the us
 # BigCommerce
  - Authorize.net
  - PayPal
- - BigCommmerce (default)
+ - BigCommerce (default)
 
 # eBay
  - eBay

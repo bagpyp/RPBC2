@@ -45,7 +45,7 @@ def persist_web_media(df):
             with open(file_path + ".jpeg", "wb") as f:
                 f.write(requests.get(url).content)
 
-    # picklin' pics
+    # pickling pics
     media = pd.read_pickle(f"{DATA_DIR}/media.pkl")
     media_now = df[
         ["sku", "v_image_url", "description"] + [f"image_{i}" for i in range(5)]

@@ -30,9 +30,9 @@ def send_to_quivers():
 
     qdf.columns = ["Product Name", "UPC", "Stock Quantity", "Price"]
 
-    fname = f"Q {str(dt.datetime.now()).split('.')[0].replace(':', '-')}.csv"
+    file_name = f"Q {str(dt.datetime.now()).split('.')[0].replace(':', '-')}.csv"
 
-    qdf.to_csv(fname, index=False)
+    qdf.to_csv(file_name, index=False)
 
     host = quivers_config["address"]
     port = 22
@@ -42,6 +42,6 @@ def send_to_quivers():
     with paramiko.Transport((host, port)) as transport:
         transport.connect(username=username, password=password)
         with paramiko.SFTPClient.from_transport(transport) as sftp:
-            sftp.put(fname, fname)
+            sftp.put(file_name, file_name)
 
-    os.remove(fname)
+    os.remove(file_name)

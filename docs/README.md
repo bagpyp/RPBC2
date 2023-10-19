@@ -8,5 +8,5 @@ Written by Robbie Cunningham
 
 ## Table of Contents 
 
-1. [Web SKUs and Retail Pro ALUs](/SKUs and ALUs.md)  
-2. [RioT and GTINs](/RioT.md)
+1. [Web SKUs and Retail Pro ALUs](./SKUs and ALUs.md)  
+2. [RioT and GTINs](./RioT.md)

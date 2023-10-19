@@ -10,4 +10,3 @@ src/constants/channel_maps.py
 .vscode
 .idea
 __pycache__
-qodana.yaml

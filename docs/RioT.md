@@ -3,7 +3,7 @@
 RioT Runs Item Master Catalog Export and Item Master Quantity Export at 11:30pm every night.  
 To issue a new GTIN to an item, the `Text10` field (UPC mirror) in Retail Pro has to be deleted, then  
 running IMCE and IMQE will refill the field, and issue new GTIN.  If this happens to a product on the shelf, 
-the product will have to be qurantined and retagged.  
+the product will have to be quarantined and re-tagged.  
   
 Buyers have been trained specifically to carry over products by changing (eg) Desc2, and leave the UPC alone 
 so that the GTIN stays with the item.  
