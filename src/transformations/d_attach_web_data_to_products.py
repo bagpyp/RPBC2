@@ -21,10 +21,11 @@ def attach_web_data_to_products(df, pdf):
             "p_description",
             "v_image_url",
             "p_is_visible",
-            "p_date_created",
-            "p_date_modified",
             "p_id",
             "v_id",
+            "cf_ebay_category",
+            "cf_ebay_price",
+            "cf_amazon_status",
         ]
         + [f"image_{i}" for i in range(5)]
     ]

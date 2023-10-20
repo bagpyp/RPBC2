@@ -38,6 +38,9 @@ def _product_update_payload(g):
             "list_on_amazon": r["listOnAmazon"],
             "amazon_price": r["pAmazon"],
             "retail_price": r["pMSRP"],
+            "cf_ebay_category": r["cf_ebay_category"],
+            "cf_ebay_price": r["cf_ebay_price"],
+            "cf_amazon_status": r["cf_amazon_status"],
         }
     )
     if r["clearance_cat"] != "":

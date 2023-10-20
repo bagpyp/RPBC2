@@ -17,8 +17,6 @@ def _restructure_product_group_media(group):
             "p_categories",
             "p_description",
             "p_is_visible",
-            "p_date_created",
-            "p_date_modified",
             "p_id",
             "description",
         ]:

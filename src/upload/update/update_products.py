@@ -7,11 +7,15 @@ from src.util import LOGS_DIR
 
 
 def _update_custom_fields(update_id, update_payload):
-    update_custom_field(update_id, "eBay Sale Price", update_payload["amazon_price"])
-    if update_payload["list_on_amazon"]:
-        update_custom_field(update_id, "Amazon Status", "Enabled")
-    else:
-        update_custom_field(update_id, "Amazon Status", "Disabled")
+    if update_payload["amazon_price"] != update_payload["cf_amazon_price"]:
+        update_custom_field(
+            update_id, "eBay Sale Price", update_payload["amazon_price"]
+        )
+    if update_payload["list_on_amazon"] != update_payload["cf_amazon_status"]:
+        if update_payload["list_on_amazon"]:
+            update_custom_field(update_id, "Amazon Status", "Enabled")
+        else:
+            update_custom_field(update_id, "Amazon Status", "Disabled")
 
 
 def update_products(payloads):
