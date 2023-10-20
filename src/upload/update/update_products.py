@@ -51,3 +51,5 @@ def update_products(payloads):
             for update_failure_response_group in failed_to_update:
                 for update_failure_response in update_failure_response_group:
                     ftu_log_file.write(update_failure_response.text + "\n")
+                # new line after each "group"
+                ftu_log_file.write("\n")
