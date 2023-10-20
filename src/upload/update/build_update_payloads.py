@@ -53,7 +53,11 @@ def _product_update_payload(g):
         product.update({"is_visible": False})
     if len(g) > 1:
         variants = []
-        for h in g[1:]:
+        for i, h in enumerate(g[1:]):
+            if i == 0:
+                product["cf_ebay_category"] = int(h["cf_ebay_category"])
+                product["cf_ebay_price"] = float(h["cf_ebay_price"])
+                product["cf_amazon_status"] = h["cf_amazon_status"]
             variant = {}
             variant.update(
                 {

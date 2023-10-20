@@ -7,7 +7,7 @@ from src.util import LOGS_DIR
 
 
 def _update_custom_fields(update_id, update_payload):
-    if update_payload["amazon_price"] != update_payload["cf_amazon_price"]:
+    if update_payload["amazon_price"] != update_payload["cf_ebay_price"]:
         update_custom_field(
             update_id, "eBay Sale Price", update_payload["amazon_price"]
         )
@@ -43,6 +43,8 @@ def update_products(payloads):
 
                 if all([r.ok for r in res]):
                     updated.append(res)
+            elif any([r.status_code == 403 for r in res]):
+                debug = "Here"
             else:
                 failed_to_update.append(res)
 
