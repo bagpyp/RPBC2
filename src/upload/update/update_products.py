@@ -18,7 +18,7 @@ def update_products(payloads):
             status_codes = [r.status_code for r in res]
             alert_codes = [403, 404]
             for alert_code in alert_codes:
-                if any([status_code == alert_code for status_code in status_codes]):
+                if alert_code in status_codes:
                     print(f"{alert_code} for product with id:", uid)
                     print("payload:", u)
                     failed_to_update.append(res)
