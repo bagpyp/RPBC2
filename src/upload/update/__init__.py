@@ -1,2 +1,3 @@
+from .batch_update_products import batch_update_products
 from .build_update_payloads import build_update_payloads
 from .update_products import update_products

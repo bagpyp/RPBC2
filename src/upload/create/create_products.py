@@ -22,7 +22,6 @@ from src.util import DATA_DIR, LOGS_DIR, IMAGES_DIR
 def create_products(payloads):
     if len(payloads) > 0:
         print(f"Creating {len(payloads)} products in BigCommerce...")
-        sleep(1)
 
     mdf_changed = False
     mdf = pd.read_pickle(f"{DATA_DIR}/media.pkl")
@@ -106,9 +105,7 @@ def create_products(payloads):
             update_custom_field(
                 p_id,
                 "eBay Category ID",
-                bc_category
-                if bc_category in bc_category_id_to_ebay_category_id
-                else "0",
+                bc_category_id_to_ebay_category_id.get(bc_category, "0"),
             )
 
         else:

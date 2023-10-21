@@ -14,13 +14,10 @@ def build_update_payloads(df):
         & (g.p_id.count() == 1)
     ).groupby("webName", sort=False)
 
-    product_payloads_for_update = []
+    product_payloads_for_update = {"single_products": [], "product_groups": []}
     for name, g in changed_products_gb:
-        try:
-            product_payloads_for_update.append(_product_update_payload(g))
-        except Exception:
-            print("Couldn't create update payload for", name)
-            continue
+        payload, product_type = _product_update_payload(g)
+        product_payloads_for_update[f"{product_type}s"].append(payload)
 
     return product_payloads_for_update
 
@@ -55,7 +52,7 @@ def _product_update_payload(g):
         variants = []
         for i, h in enumerate(g[1:]):
             if i == 0:
-                product["cf_ebay_category"] = int(h["cf_ebay_category"])
+                product["cf_ebay_category"] = h["cf_ebay_category"]
                 product["cf_ebay_price"] = float(h["cf_ebay_price"])
                 product["cf_amazon_status"] = h["cf_amazon_status"]
             variant = {}
@@ -71,4 +68,5 @@ def _product_update_payload(g):
             )
             variants.append(variant)
         product.update({"variants": variants})
-    return product
+        return product, "product_group"
+    return product, "single_product"
