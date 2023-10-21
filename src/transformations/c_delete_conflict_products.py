@@ -1,5 +1,3 @@
-from tqdm import tqdm
-
 from config import apply_changes
 from src.api.products import delete_product
 from src.util import DATA_DIR
@@ -9,6 +7,8 @@ def delete_conflict_products(df, pdf):
     df = df.copy()
     pdf = pdf.copy()
 
+    # this deletes products on the web that have been entirely carried over in retail pro,
+    # meaning that the desc1/desc2 no longer exists in retail pro, so webName won't map back
     degenerates = pdf[~pdf.p_name.isin(df["webName"])]
     cols = ["p_name", "p_id", "p_sku", "v_sku", "v_id", "v_image_url"] + [
         f"image_{i}" for i in range(5)
@@ -24,7 +24,7 @@ def delete_conflict_products(df, pdf):
     if apply_changes:
         pdf_changed = False
         bad_ids = degenerates.p_id.dropna().unique().tolist()
-        for p_id in tqdm(bad_ids):
+        for p_id in bad_ids:
             delete_product(p_id)
             pdf = pdf[pdf.p_id != p_id]
             pdf_changed = True
