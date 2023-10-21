@@ -23,40 +23,53 @@ def create_products(payloads):
     if len(payloads) > 0:
         print(f"Creating {len(payloads)} products in BigCommerce...")
 
-    mdf_changed = False
     mdf = pd.read_pickle(f"{DATA_DIR}/media.pkl")
 
     all_bad_image_skus = []
-
-    created = []
     failed_to_create = []
-    for i, c in tqdm(enumerate(payloads)):
+
+    def recursive_create(c, mdf):
         res = create_product(c)
-        if not res.ok:
+        if res.ok:
+            json_response_payload = res.json()["data"]
+            p_id = str(json_response_payload["id"])
+            # Amazon Price (called eBay price)
+            amazon_price = c["amazon_price"]
+            update_custom_field(p_id, "eBay Sale Price", amazon_price)
+            # Amazon Status
+            list_on_amazon = c["list_on_amazon"]
+            update_custom_field(
+                p_id, "Amazon Status", "Enabled" if list_on_amazon else "Disabled"
+            )
+            # eBay Category
+            bc_category = str(json_response_payload["categories"][0])
+            update_custom_field(
+                p_id,
+                "eBay Category ID",
+                bc_category_id_to_ebay_category_id.get(bc_category, "0"),
+            )
+            return
+        else:
             if res.reason == "Too Many Requests" or res.status_code == 429:
                 try:
                     sleep(int(res.headers["X-Rate-Limit-Time-Reset-Ms"]) / 1000)
                 except KeyError:
                     sleep(int(res.headers["X-Rate-Limit-Time-Reset-Ms".lower()]) / 1000)
-                res = create_product(c)
-            if res.reason == "Conflict":
-                if "product sku is a duplicate" in res.text:
-                    conflict_sku = c["sku"]
-                    conflict_products = get_product_id_by_sku(conflict_sku).json()[
-                        "data"
-                    ]
-                    for cp in conflict_products:
-                        delete_product(cp["id"])
-                    res = create_product(c)
-                if "product name is a duplicate" in res.text:
-                    conflict_name = c["name"]
-                    conflict_products = get_product_id_by_name(conflict_name).json()[
-                        "data"
-                    ]
-                    for cp in conflict_products:
-                        delete_product(cp["id"])
-                    res = create_product(c)
-            if (
+                recursive_create(c, mdf)
+
+            elif res.reason == "Conflict" and "product sku is a duplicate" in res.text:
+                conflict_sku = c["sku"]
+                conflict_products = get_product_id_by_sku(conflict_sku).json()["data"]
+                for cp in conflict_products:
+                    delete_product(cp["id"])
+                recursive_create(c, mdf)
+            elif res.reason == "Conflict" and "product name is a duplicate" in res.text:
+                conflict_name = c["name"]
+                conflict_products = get_product_id_by_name(conflict_name).json()["data"]
+                for cp in conflict_products:
+                    delete_product(cp["id"])
+                recursive_create(c, mdf)
+            elif (
                 "could not be processed and may not be valid image" in res.text
                 or "could not be downloaded and may be invalid"
             ):
@@ -82,34 +95,15 @@ def create_products(payloads):
                 )
                 all_bad_image_skus.extend(bad_image_skus)
                 mdf.loc[bad_image_skus, mdf.columns != "description"] = nan
-                mdf_changed = True
+                mdf.to_pickle(f"{DATA_DIR}/media.pkl")
                 c["is_visible"] = False
-                res = create_product(c)
-        # res had been written over many times potentially,
-        # which is why this is not an `elif` paired with the `if` above
-        if res.ok:
-            created.append(res)
-            json_response_payload = res.json()["data"]
-            p_id = str(json_response_payload["id"])
+                recursive_create(c, mdf)
+            else:
+                failed_to_create.append(res)
+                return
 
-            # Amazon Price (called eBay price)
-            amazon_price = c["amazon_price"]
-            update_custom_field(p_id, "eBay Sale Price", amazon_price)
-            # Amazon Status
-            list_on_amazon = c["list_on_amazon"]
-            update_custom_field(
-                p_id, "Amazon Status", "Enabled" if list_on_amazon else "Disabled"
-            )
-            # eBay Category
-            bc_category = str(json_response_payload["categories"][0])
-            update_custom_field(
-                p_id,
-                "eBay Category ID",
-                bc_category_id_to_ebay_category_id.get(bc_category, "0"),
-            )
-
-        else:
-            failed_to_create.append(res)
+    for i, c in tqdm(enumerate(payloads)):
+        recursive_create(c, mdf)
 
     # remove corrupt images from images/ folder
     for bis in all_bad_image_skus:
@@ -121,10 +115,6 @@ def create_products(payloads):
             for file_path in glob(f"{IMAGES_DIR}/variant/{bis}.jpeg"):
                 if os.path.exists(file_path):
                     os.remove(file_path)
-
-    # persist mdf changes in pickle
-    if mdf_changed:
-        mdf.to_pickle(f"{DATA_DIR}/media.pkl")
 
     if failed_to_create:
         with open(f"{LOGS_DIR}/failed_to_create.log", "w") as ftc_log_file:
