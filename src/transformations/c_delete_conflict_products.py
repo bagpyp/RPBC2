@@ -31,3 +31,12 @@ def delete_conflict_products(df, pdf):
         if pdf_changed:
             pdf.to_pickle(f"{DATA_DIR}/products.pkl")
     return pdf
+
+
+if __name__ == "__main__":
+    import pandas as pd
+
+    pickle_df = pd.read_pickle(f"{DATA_DIR}/option_df.pkl")
+    pickle_pdf = pd.read_pickle(f"{DATA_DIR}/products.pkl")
+
+    new_pickle_pdf = delete_conflict_products(pickle_df, pickle_pdf)

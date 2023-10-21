@@ -1,6 +1,8 @@
 import pandas as pd
 from numpy import nan
 
+from src.util import DATA_DIR
+
 
 def attach_web_data_to_products(df, pdf):
     df = df.copy()
@@ -31,5 +33,12 @@ def attach_web_data_to_products(df, pdf):
     ]
 
     df = pd.merge(df, pdf, how="left", left_on="sku", right_on="v_sku").replace("", nan)
-
+    df.to_pickle(f"{DATA_DIR}/merged_df.pkl")
     return df
+
+
+if __name__ == "__main__":
+    pickle_df = pd.read_pickle(f"{DATA_DIR}/option_df.pkl")
+    pickle_pdf = pd.read_pickle(f"{DATA_DIR}/products.pkl")
+
+    merged_df = attach_web_data_to_products(pickle_df, pickle_pdf)
