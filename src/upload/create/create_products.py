@@ -59,19 +59,26 @@ def create_products(payloads):
 
             elif res.reason == "Conflict" and "product sku is a duplicate" in res.text:
                 conflict_sku = c["sku"]
-                conflict_products = get_product_id_by_sku(conflict_sku).json()["data"]
-                for cp in conflict_products:
-                    delete_product(cp["id"])
-                recursive_create(c, mdf)
+                conflict_products = get_product_id_by_sku(conflict_sku)
+                if conflict_products:
+                    for cp in conflict_products:
+                        delete_product(cp)
+                    recursive_create(c, mdf)
+                else:
+                    failed_to_create.append(res)
+                    return
             elif res.reason == "Conflict" and "product name is a duplicate" in res.text:
                 conflict_name = c["name"]
-                conflict_products = get_product_id_by_name(conflict_name).json()["data"]
-                for cp in conflict_products:
-                    delete_product(cp["id"])
-                recursive_create(c, mdf)
-            elif (
-                "could not be processed and may not be valid image" in res.text
-                or "could not be downloaded and may be invalid"
+                conflict_products = get_product_id_by_name(conflict_name)
+                if conflict_products:
+                    for cp in conflict_products:
+                        delete_product(cp)
+                    recursive_create(c, mdf)
+                else:
+                    failed_to_create.append(res)
+                    return
+            elif ("could not be processed and may not be valid image" in res.text) or (
+                "could not be downloaded and may be invalid" in res.text
             ):
                 broken_image_urls = []
                 if "images" in c:

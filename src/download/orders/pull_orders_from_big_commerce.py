@@ -44,7 +44,7 @@ def _build_order_from_response(new_order):
     external_source = str(new_order["external_source"]).lower()
     if "walmart" in external_source:
         order["payment_id"] = (
-            new_order["staff_new_ordertes"].split("\t")[1].split("\n")[0]
+            new_order.get("staff_notes", "_\tno_id\n").split("\t")[1].split("\n")[0]
         )
         order["channel"] = "WALMART"
         order["payment_zone"] = "PayPal"
