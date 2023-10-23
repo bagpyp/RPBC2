@@ -117,11 +117,11 @@ def create_products(payloads):
         if bis[:2] in ["0-", "2-"]:
             for file_path in glob(f"{IMAGES_DIR}/base/{bis}_*"):
                 if os.path.exists(file_path):
-                    os.remove(file_path)
+                    os.rename(file_path, file_path.replace("/base/", "/removed/"))
         elif bis[:2] == "1-":
             for file_path in glob(f"{IMAGES_DIR}/variant/{bis}.jpeg"):
                 if os.path.exists(file_path):
-                    os.remove(file_path)
+                    os.rename(file_path, file_path.replace("/base/", "/removed/"))
 
     if failed_to_create:
         with open(f"{LOGS_DIR}/failed_to_create.log", "w") as ftc_log_file:
