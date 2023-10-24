@@ -14,19 +14,19 @@ def _sid():
     return sid
 
 
-def read_order_number(regular=True):
+def _read_order_number(regular=True):
     kind = "order" if regular else "return"
     with open(f"{INVOICES_DIR}/base_{kind}_number.txt") as number_file:
         return int(number_file.read())
 
 
-def overwrite_order_number(new_order_num: int, regular=True):
+def _overwrite_order_number(new_order_num: int, regular=True):
     kind = "order" if regular else "return"
     with open(f"{INVOICES_DIR}/base_{kind}_number.txt", "w") as number_file:
         number_file.write(str(new_order_num))
 
 
-def count_written_orders(regular=True):
+def _count_written_orders(regular=True):
     kind = "order" if regular else "return"
     order_counts = 0
     for api_source in ["sls", "bc"]:
@@ -44,10 +44,10 @@ def write_orders_to_ecm(orders, regular=True):
 
     written_receipts = pd.read_csv(f"{INVOICES_DIR}/written.csv")
     written_receipt_numbers = written_receipts.invc_no.unique().tolist()
-    order_counts = count_written_orders(regular=regular)
+    order_counts = _count_written_orders(regular=regular)
 
     order_file_number_changed = False
-    base_order_number = read_order_number(regular=regular)
+    base_order_number = _read_order_number(regular=regular)
 
     invoices = []
     for i, order in enumerate(orders):
@@ -60,8 +60,8 @@ def write_orders_to_ecm(orders, regular=True):
             order_number = base_order_number + order_counts + (i + 1)
         invoices.append(Invoice(order, order_number, regular=regular))
 
-        if order_file_number_changed:
-            overwrite_order_number(base_order_number, regular=regular)
+    if order_file_number_changed:
+        _overwrite_order_number(base_order_number, regular=regular)
 
     header = (
         f'<?xml version="1.0" encoding="UTF-8"?>\n'
