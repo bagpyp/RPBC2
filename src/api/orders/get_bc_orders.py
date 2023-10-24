@@ -4,7 +4,13 @@ from config import base, headers
 
 
 def _get_bc_orders_by_status_id(status_id, i):
-    url = base + f"v2/orders?status_id={status_id}" + f"&limit=50&page={i}"
+    url = (
+        base
+        + f"v2/orders?status_id={status_id}"
+        + f"&limit=50&page={i}"
+        # + "&include_fields=id,external_source,external_id,external_id,ebay_order_id,payment_provider_id,"
+        #   "payment_method,payment_method,date_created,total_ex_tax,status,products"
+    )
     res = requests.get(url, headers=headers)
     return res
 
