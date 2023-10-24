@@ -1,17 +1,18 @@
 import pandas as pd
 from numpy import nan
 
+from src.util import DATA_DIR
+
 
 def _restructure_product_group_media(group):
-    group = group.copy()
     if len(group) > 1:
+        image_cols = [f"image_{i}" for i in range(5)]
         # lift images to base level of product group
-        first_row = group.iloc[[0]]
-        rest_of_group = group.iloc[list(range(1, len(group)))]
-        first_row.iloc[[0], -5:] = rest_of_group.iloc[[0], -5:].values
-        rest_of_group.loc[:, [f"image_{i}" for i in range(5)]] = nan
-        # lift all else p_
-        for p in [
+        first_row = group.iloc[[0], :].copy()
+        rest_of_group = group.iloc[1:, :].copy()
+        rest_of_group.loc[:, image_cols] = nan
+        # lift all other product representative data to first row
+        for product_column in [
             "p_name",
             "p_sku",
             "p_categories",
@@ -19,12 +20,13 @@ def _restructure_product_group_media(group):
             "p_is_visible",
             "p_id",
             "description",
-        ]:
-            if rest_of_group[p].count():
-                first_row.loc[:, p] = rest_of_group.loc[
-                    rest_of_group[p].first_valid_index()
-                ][p]
-                rest_of_group.loc[:, p] = nan
+        ] + [f"image_{i}" for i in range(5)]:
+            if rest_of_group[product_column].count():
+                first_valid_index = rest_of_group[product_column].first_valid_index()
+                first_row.loc[:, product_column] = rest_of_group.loc[
+                    first_valid_index, product_column
+                ]
+                rest_of_group.loc[:, product_column] = nan
         return pd.concat([first_row, rest_of_group])
     else:
         group.image_0 = group.image_0.fillna(group.v_image_url)
@@ -35,7 +37,14 @@ def _restructure_product_group_media(group):
 def collect_images_from_product_children(df):
     print("Shuffling images among product group Representatives and Members...")
     gb = df.groupby("webName", sort=False)
-    mdf = pd.concat([_restructure_product_group_media(g) for _, g in gb])
+    mdf = gb.apply(lambda g: _restructure_product_group_media(g.reset_index(drop=True)))
+    mdf = mdf.reset_index(drop=True)
     mdf.description = mdf.description.fillna(mdf.p_description)
     mdf = mdf[~mdf.sku.duplicated(keep=False)]
+    mdf.to_pickle(f"{DATA_DIR}/mediated_df.pkl")
     return mdf
+
+
+if __name__ == "__main__":
+    df = pd.read_pickle(f"{DATA_DIR}/merged_df.pkl")
+    mediated_df = collect_images_from_product_children(df)
