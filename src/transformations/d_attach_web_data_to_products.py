@@ -50,7 +50,7 @@ def attach_web_data_to_products(df, pdf):
 
 
 if __name__ == "__main__":
-    pickle_df = pd.read_pickle(f"{DATA_DIR}/option_df.pkl")
-    pickle_pdf = pd.read_pickle(f"{DATA_DIR}/products.pkl")
+    option_df = pd.read_pickle(f"{DATA_DIR}/option_df.pkl")
+    products = pd.read_pickle(f"{DATA_DIR}/products.pkl")
 
-    merged_df = attach_web_data_to_products(pickle_df, pickle_pdf)
+    attach_web_data_to_products(option_df, products)

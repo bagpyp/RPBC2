@@ -1,6 +1,7 @@
 import pandas as pd
 
 from src.constants import dcs_name_to_bc_category
+from src.util import DATA_DIR
 
 
 def clean_and_filter(df):
@@ -70,5 +71,10 @@ def clean_and_filter(df):
             chart.iloc[i, 0] += f" {j + 1}"
             j += 1
     df.webName = df.ssid.map(chart.webName.to_dict())
-
+    df.to_pickle(f"{DATA_DIR}/clean_df.pkl")
     return df
+
+
+if __name__ == "__main__":
+    fromECM = pd.read_pickle(f"{DATA_DIR}/fromECM.pkl")
+    clean_and_filter(fromECM)

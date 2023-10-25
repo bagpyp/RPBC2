@@ -62,3 +62,8 @@ def build_product_group_structure(df):
     result = df_with_options[column_order]
     result.to_pickle(f"{DATA_DIR}/option_df.pkl")
     return result
+
+
+if __name__ == "__main__":
+    clean_df = pd.read_pickle(f"{DATA_DIR}/clean_df.pkl")
+    build_product_group_structure(clean_df)

@@ -46,5 +46,5 @@ def collect_images_from_product_children(df):
 
 
 if __name__ == "__main__":
-    df = pd.read_pickle(f"{DATA_DIR}/merged_df.pkl")
-    mediated_df = collect_images_from_product_children(df)
+    merged_df = pd.read_pickle(f"{DATA_DIR}/merged_df.pkl")
+    collect_images_from_product_children(merged_df)

@@ -53,3 +53,8 @@ def persist_web_media(df):
     media.update(media_now)
     media = pd.concat([media, media_now[~media_now.index.isin(media.index)]])
     media.to_pickle(f"{DATA_DIR}/media.pkl")
+
+
+if __name__ == "__main__":
+    mediated_df = pd.read_pickle(f"{DATA_DIR}/mediated_df.pkl")
+    persist_web_media(mediated_df)
