@@ -12,16 +12,34 @@ def persist_web_media(df):
     bases = [
         b.split("\\")[-1].split(".")[0] for b in glob(f"{IMAGES_DIR}\\base\\*.jpeg")
     ]
+    # contains 0-s and 2-s
+    """
+    bases[:5]
+    ['0-00001_0', '0-00001_1', '0-00002_0', '0-00004_0', '0-00004_1']
+    """
     base = (
         df[df.sku.str[:2] != "1-"][["sku"] + [f"image_{i}" for i in range(5)]]
         .set_index("sku")
         .dropna(how="all")
     )
-    for name, urls in base.iterrows():
+    # all index values start with 2-
+    """
+    base.sample(5)
+                                                        image_0  ...                                            image_4
+    sku                                                          ...                                                   
+    2-120463  https://cdn11.bigcommerce.com/s-gaywsgumtw/pro...  ...  https://cdn11.bigcommerce.com/s-gaywsgumtw/pro...
+    2-43108   https://cdn11.bigcommerce.com/s-gaywsgumtw/pro...  ...                                                NaN
+    2-08613   https://cdn11.bigcommerce.com/s-gaywsgumtw/pro...  ...                                                NaN
+    2-35747   https://cdn11.bigcommerce.com/s-gaywsgumtw/pro...  ...                                                NaN
+    2-53466   https://cdn11.bigcommerce.com/s-gaywsgumtw/pro...  ...                                                NaN
+    """
+    for sku, urls in base.iterrows():
         for i, url in enumerate(urls.dropna().tolist()):
-            if name + f"_{i}" not in bases:
+            sku_image = sku + f"_{i}"
+            #  if "2-00045_0" not in bases
+            if sku_image not in bases:
                 # add this filename, url pair to to_download
-                to_download[f"{IMAGES_DIR}/base/" + name + f"_{i}"] = url
+                to_download[f"{IMAGES_DIR}/base/" + sku_image] = url
 
     # variant images
     variants = [
@@ -32,10 +50,10 @@ def persist_web_media(df):
         .set_index("sku")
         .dropna(how="all")
     )
-    for name, url in variant.iterrows():
-        if name not in variants:
+    for sku, url in variant.iterrows():
+        if sku not in variants:
             # add this filename, url pair to to_download
-            to_download[f"{IMAGES_DIR}/variant/" + name] = url.values[0]
+            to_download[f"{IMAGES_DIR}/variant/" + sku] = url.values[0]
 
     # download step
     num_new_images = len(to_download)
