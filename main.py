@@ -97,8 +97,8 @@ def main():
     end_time = dt.datetime.now()
     print(f"Finished at {end_time}, duration process was {end_time - start_time}")
 
-    with open(f"{LOGS_DIR}/run.log", "w") as run_file:
-        run_file.write(f"finished at {end_time}, took {end_time - start_time}")
+    with open(f"{LOGS_DIR}/run.log", "a") as run_file:
+        run_file.write(f"{start_time},{end_time},{end_time - start_time}")
 
 
 if __name__ == "__main__":
