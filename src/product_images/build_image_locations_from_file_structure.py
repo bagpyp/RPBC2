@@ -30,3 +30,7 @@ def build_image_locations_from_file_structure():
     files = "/product_images/imported/" + files
     files.to_pickle(f"{DATA_DIR}/fileDf.pkl")
     return files
+
+
+if __name__ == "__main__":
+    build_image_locations_from_file_structure()
