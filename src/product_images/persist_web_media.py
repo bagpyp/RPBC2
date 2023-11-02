@@ -61,7 +61,9 @@ def persist_web_media(df):
         print(f"Archiving {num_new_images} images from BigCommerce")
         for file_path, url in to_download.items():
             with open(file_path + ".jpeg", "wb") as f:
-                f.write(requests.get(url).content)
+                image_req = requests.get(url)
+                if image_req.ok:
+                    f.write(image_req.content)
 
     # pickling pics
     media = pd.read_pickle(f"{DATA_DIR}/media.pkl")
