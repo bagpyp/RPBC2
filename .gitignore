@@ -6,7 +6,6 @@ data
 logs
 
 src/constants/channel_maps.py
-scripts/dav.csv
 
 .vscode
 .idea

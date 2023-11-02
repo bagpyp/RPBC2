@@ -1,7 +1,7 @@
 import pandas as pd
 from numpy import nan
 
-from src.util import DATA_DIR, ROOT_DIR
+from src.util import DATA_DIR
 
 pd.options.display.width = 230
 pd.options.display.max_columns = 50
@@ -41,7 +41,7 @@ for i, bic in enumerate(base_image_cols):
         .apply(lambda x: "".join(x.split("/")[3:]).replace("?c=1", ""))
     )
 
-dav = pd.read_csv(f"{ROOT_DIR}/scripts/dav.csv")
+dav = pd.read_csv(f"{DATA_DIR}/dav.csv")
 dav = dav.loc[dav.filename.str[:2].isin(["0-", "2-"]), :]
 dav = dav.loc[dav.number != "imported", :]
 dav["sku"] = dav.filename.apply(lambda x: x.split("_")[0])
