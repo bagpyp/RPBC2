@@ -39,7 +39,7 @@ def persist_web_media(df):
             #  if "2-00045_0" not in bases
             if sku_image not in bases:
                 # add this filename, url pair to to_download
-                to_download[f"{IMAGES_DIR}/base/" + sku_image] = url
+                to_download[f"{IMAGES_DIR}/downloaded/base/" + sku_image] = url
 
     # variant images
     variants = [
@@ -53,7 +53,7 @@ def persist_web_media(df):
     for sku, url in variant.iterrows():
         if sku not in variants:
             # add this filename, url pair to to_download
-            to_download[f"{IMAGES_DIR}/variant/" + sku] = url.values[0]
+            to_download[f"{IMAGES_DIR}/downloaded/variant/" + sku] = url.values[0]
 
     # download step
     num_new_images = len(to_download)
