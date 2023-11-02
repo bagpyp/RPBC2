@@ -7,11 +7,8 @@ def build_create_payloads(df):
 
     product_payloads_for_creation = []
     for name, g in new_products_gb:
-        try:
-            product_payloads_for_creation.append(_product_creation_payload(g))
-        except Exception:
-            print("Couldn't create creation payload for", name)
-            continue
+        payload = _product_creation_payload(g)
+        product_payloads_for_creation.append(payload)
 
     return product_payloads_for_creation
 

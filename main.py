@@ -93,7 +93,9 @@ def main():
     print(f"Finished at {end_time}, duration process was {end_time - start_time}")
 
     with open(f"{LOGS_DIR}/run.log", "a") as run_file:
-        run_file.write(f"{start_time},{end_time},{end_time - start_time}\n")
+        run_file.write(
+            f"{start_time},{end_time},{end_time - start_time},{update_window_hours}\n"
+        )
 
 
 if __name__ == "__main__":
