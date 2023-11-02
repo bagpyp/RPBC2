@@ -73,16 +73,11 @@ def main():
 
     if apply_changes:
         persist_web_media(df)
-
-    df = df.set_index("sku")
-    df.update(pd.read_pickle(f"{DATA_DIR}/media.pkl"))
-
-    if apply_changes:
         file_structure_df = build_image_locations_from_file_structure()
     else:
         file_structure_df = pd.read_pickle(f"{DATA_DIR}/fileDf.pkl")
 
-    df = df.join(file_structure_df)
+    df = df.set_index("sku").join(file_structure_df)
     df = prepare_df_for_upload(df)
 
     product_payloads_for_update = build_update_payloads(df)

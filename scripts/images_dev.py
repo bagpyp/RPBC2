@@ -8,7 +8,7 @@ pd.options.display.max_columns = 50
 pd.options.display.max_rows = 200
 pd.options.display.max_colwidth = 0
 
-mdf = pd.read_pickle(f"{DATA_DIR}/media.pkl").reset_index()
+mdf = pd.read_pickle(f"{DATA_DIR}/mediated_df.pkl").reset_index()
 base_image_cols = [f"image_{i}" for i in range(5)]
 image_cols = ["v_image_url"] + base_image_cols
 mdf_cols = ["sku"] + image_cols

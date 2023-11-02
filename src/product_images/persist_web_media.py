@@ -65,15 +65,6 @@ def persist_web_media(df):
                 if image_req.ok:
                     f.write(image_req.content)
 
-    # pickling pics
-    media = pd.read_pickle(f"{DATA_DIR}/media.pkl")
-    media_now = df[
-        ["sku", "v_image_url", "description"] + [f"image_{i}" for i in range(5)]
-    ].set_index("sku")
-    media.update(media_now)
-    media = pd.concat([media, media_now[~media_now.index.isin(media.index)]])
-    media.to_pickle(f"{DATA_DIR}/media.pkl")
-
 
 if __name__ == "__main__":
     mediated_df = pd.read_pickle(f"{DATA_DIR}/mediated_df.pkl")

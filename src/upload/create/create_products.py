@@ -4,8 +4,6 @@ import re
 from glob import glob
 from time import sleep
 
-import pandas as pd
-from numpy import nan
 from tqdm import tqdm
 
 from src.api.products import (
@@ -16,19 +14,17 @@ from src.api.products import (
     update_custom_field,
 )
 from src.constants import bc_category_id_to_ebay_category_id
-from src.util import DATA_DIR, LOGS_DIR, IMAGES_DIR
+from src.util import LOGS_DIR, IMAGES_DIR
 
 
 def create_products(payloads):
     if len(payloads) > 0:
         print(f"Creating {len(payloads)} products in BigCommerce...")
 
-    mdf = pd.read_pickle(f"{DATA_DIR}/media.pkl")
-
     all_bad_image_skus = []
     failed_to_create = []
 
-    def recursive_create(c, mdf):
+    def recursive_create(c):
         res = create_product(c)
         if res.ok:
             json_response_payload = res.json()["data"]
@@ -55,7 +51,7 @@ def create_products(payloads):
                     sleep(int(res.headers["X-Rate-Limit-Time-Reset-Ms"]) / 1000)
                 except KeyError:
                     sleep(int(res.headers["X-Rate-Limit-Time-Reset-Ms".lower()]) / 1000)
-                recursive_create(c, mdf)
+                recursive_create(c)
 
             elif res.reason == "Conflict" and "product sku is a duplicate" in res.text:
                 conflict_sku = c["sku"]
@@ -63,7 +59,7 @@ def create_products(payloads):
                 if conflict_products:
                     for cp in conflict_products:
                         delete_product(cp)
-                    recursive_create(c, mdf)
+                    recursive_create(c)
                 else:
                     failed_to_create.append(res)
                     return
@@ -73,7 +69,7 @@ def create_products(payloads):
                 if conflict_products:
                     for cp in conflict_products:
                         delete_product(cp)
-                    recursive_create(c, mdf)
+                    recursive_create(c)
                 else:
                     failed_to_create.append(res)
                     return
@@ -101,16 +97,14 @@ def create_products(payloads):
                     )
                 )
                 all_bad_image_skus.extend(bad_image_skus)
-                mdf.loc[bad_image_skus, mdf.columns != "description"] = nan
-                mdf.to_pickle(f"{DATA_DIR}/media.pkl")
                 c["is_visible"] = False
-                recursive_create(c, mdf)
+                recursive_create(c)
             else:
                 failed_to_create.append(res)
                 return
 
-    for i, c in tqdm(enumerate(payloads)):
-        recursive_create(c, mdf)
+    for i, create_payload in tqdm(enumerate(payloads)):
+        recursive_create(create_payload)
 
     # remove corrupt images from images/ folder
     for bis in all_bad_image_skus:
