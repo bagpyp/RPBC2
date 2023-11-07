@@ -8,7 +8,7 @@ import datetime as dt
 
 import pandas as pd
 
-from config import update_window_hours, apply_changes, sync_sideline_swap
+from config import apply_changes, sync_sideline_swap
 from scripts.quivers import send_to_quivers
 from src.download.orders import get_all_orders, get_all_returns
 from src.download.products import (
@@ -44,9 +44,7 @@ from src.util import DATA_DIR, LOGS_DIR
 
 def main():
     start_time = dt.datetime.now()
-    print(
-        f"Began at {start_time}, processing changes in RetailPro over the last {update_window_hours} hours..."
-    )
+    print(f"Began at {start_time}, processing changes in RetailPro...")
 
     if not apply_changes:
         df = pd.read_pickle(f"{DATA_DIR}/fromECM.pkl")
@@ -89,12 +87,16 @@ def main():
         create_products(product_payloads_for_creation)
         send_to_quivers()
 
+    num_created = len(product_payloads_for_creation)
+    num_updated = len(product_payloads_for_update["product_groups"]) + len(
+        product_payloads_for_update["single_products"]
+    )
     end_time = dt.datetime.now()
     print(f"Finished at {end_time}, duration process was {end_time - start_time}")
 
-    with open(f"{LOGS_DIR}/run.log", "a") as run_file:
+    with open(f"{LOGS_DIR}/runs.csv", "a") as run_file:
         run_file.write(
-            f"{start_time},{end_time},{end_time - start_time},{update_window_hours}\n"
+            f"{start_time},{end_time},{end_time - start_time},{num_updated},{num_created}\n"
         )
 
 

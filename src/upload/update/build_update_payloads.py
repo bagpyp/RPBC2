@@ -1,15 +1,23 @@
 import datetime as dt
 
-from config import update_window_hours
+import pandas as pd
+
+from src.util import LOGS_DIR, DATA_DIR
 
 
 def build_update_payloads(df):
+    runs = pd.read_csv(f"{LOGS_DIR}/runs.csv")
+    now = dt.datetime.now()
+    last_start = runs.start.max()
+    time_delta = now - pd.to_datetime(last_start)
+    seconds_backward = time_delta.seconds + (60 * 10)
+
     gb = df.groupby("webName")
 
     changed_products_gb = gb.filter(
         lambda g: (
             g.lModified.max()
-            > (dt.datetime.now() - dt.timedelta(hours=update_window_hours))
+            > (dt.datetime.now() - dt.timedelta(seconds=seconds_backward))
         )
         & (g.p_id.count() == 1)
     ).groupby("webName", sort=False)
@@ -70,3 +78,8 @@ def _product_update_payload(g):
         product.update({"variants": variants})
         return product, "product_group"
     return product, "single_product"
+
+
+if __name__ == "__main__":
+    ready = pd.read_pickle(f"{DATA_DIR}/ready.pkl")
+    build_update_payloads(ready)
