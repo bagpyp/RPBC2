@@ -11,7 +11,7 @@ pd.options.display.max_colwidth = 0
 mdf = pd.read_pickle(f"{DATA_DIR}/mediated_df.pkl").reset_index()
 base_image_cols = [f"image_{i}" for i in range(5)]
 image_cols = ["v_image_url"] + base_image_cols
-mdf_cols = ["sku"] + image_cols
+mdf_cols = ["sku", "webName"] + image_cols
 mdf = mdf.loc[
     (
         (mdf.image_0.notna() & ~mdf.sku.str.startswith("1-"))
