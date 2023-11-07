@@ -71,7 +71,7 @@ pdf = pdf[
     ]
 ]
 
-fdf = pd.read_pickle(f"{DATA_DIR}/fileDf.pkl").apply(
+fdf = pd.read_pickle(f"{DATA_DIR}/file_df.pkl").apply(
     lambda c: c.str.replace("/product_images/imported/", "").str.replace(".jpeg", "")
 )
 

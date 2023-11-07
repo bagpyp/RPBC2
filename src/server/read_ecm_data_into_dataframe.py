@@ -124,5 +124,5 @@ def read_ecm_data_into_dataframe():
     }
 
     df = df.rename(columns=names)[names.values()]
-    df.to_pickle(f"{DATA_DIR}/fromECM.pkl")
+    df.to_pickle(f"{DATA_DIR}/from_ecm.pkl")
     return df

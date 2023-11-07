@@ -28,7 +28,7 @@ def build_image_locations_from_file_structure():
                 files.loc[sku, f"image_{i}"] = sku + f"_{i}.jpeg"
     files.columns += "_file"
     files = "/product_images/imported/" + files
-    files.to_pickle(f"{DATA_DIR}/fileDf.pkl")
+    files.to_pickle(f"{DATA_DIR}/file_df.pkl")
     return files
 
 

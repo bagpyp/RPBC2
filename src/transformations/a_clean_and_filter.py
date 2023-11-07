@@ -76,5 +76,5 @@ def clean_and_filter(df):
 
 
 if __name__ == "__main__":
-    fromECM = pd.read_pickle(f"{DATA_DIR}/fromECM.pkl")
-    clean_and_filter(fromECM)
+    from_ecm = pd.read_pickle(f"{DATA_DIR}/from_ecm.pkl")
+    clean_and_filter(from_ecm)

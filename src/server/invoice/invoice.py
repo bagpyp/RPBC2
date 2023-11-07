@@ -22,7 +22,7 @@ def _sid():
 
 class Invoice:
     def __init__(self, order, no, regular=True):
-        self.ecm_data = pd.read_pickle(f"{DATA_DIR}/fromECM.pkl")
+        self.ecm_data = pd.read_pickle(f"{DATA_DIR}/from_ecm.pkl")
         c = comments(order)
         self.invc_sid = _sid()
         self.invc_no = no

@@ -5,8 +5,8 @@ from src.util import DATA_DIR
 
 def pickles():
     clean_df = pd.read_pickle(f"{DATA_DIR}/clean_df.pkl")
-    fileDf = pd.read_pickle(f"{DATA_DIR}/fileDf.pkl")
-    fromECM = pd.read_pickle(f"{DATA_DIR}/fromECM.pkl")
+    file_df = pd.read_pickle(f"{DATA_DIR}/file_df.pkl")
+    from_ecm = pd.read_pickle(f"{DATA_DIR}/from_ecm.pkl")
     mediated_df = pd.read_pickle(f"{DATA_DIR}/mediated_df.pkl")
     merged_df = pd.read_pickle(f"{DATA_DIR}/merged_df.pkl")
     option_df = pd.read_pickle(f"{DATA_DIR}/option_df.pkl")

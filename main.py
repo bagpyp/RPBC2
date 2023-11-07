@@ -47,7 +47,7 @@ def main():
     print(f"Began at {start_time}, processing changes in RetailPro...")
 
     if not apply_changes:
-        df = pd.read_pickle(f"{DATA_DIR}/fromECM.pkl")
+        df = pd.read_pickle(f"{DATA_DIR}/from_ecm.pkl")
         pdf = pd.read_pickle(f"{DATA_DIR}/products.pkl")
 
     else:
@@ -73,7 +73,7 @@ def main():
         persist_web_media(df)
         file_structure_df = build_image_locations_from_file_structure()
     else:
-        file_structure_df = pd.read_pickle(f"{DATA_DIR}/fileDf.pkl")
+        file_structure_df = pd.read_pickle(f"{DATA_DIR}/file_df.pkl")
 
     df = df.set_index("sku").join(file_structure_df)
     df = prepare_df_for_upload(df)
