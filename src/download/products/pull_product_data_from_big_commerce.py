@@ -18,6 +18,7 @@ def pull_product_data_from_big_commerce():
             p_name=product["name"],
             p_sku=product["sku"],
             p_price=product["price"],
+            p_qty=product["inventory_level"],
             p_categories=product["categories"],
             p_brand_id=product["brand_id"],
             p_is_visible=product["is_visible"],
@@ -48,6 +49,7 @@ def pull_product_data_from_big_commerce():
                     v_id=variant["id"],
                     v_sku=variant["sku"],
                     v_image_url=variant["image_url"],
+                    v_qty=variant["inventory_level"],
                 )
                 products.append(variant_record_info)
         else:
@@ -61,3 +63,7 @@ def pull_product_data_from_big_commerce():
     pdf.loc[:, "v_id"] = pdf.v_id.astype(int).astype(str)
     pdf.to_pickle(f"{DATA_DIR}/products.pkl")
     return pdf.reset_index()
+
+
+if __name__ == "__main__":
+    pull_product_data_from_big_commerce()

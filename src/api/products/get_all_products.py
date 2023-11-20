@@ -11,7 +11,7 @@ def _get_products(i=1):
         + f"?limit=250&page={i}"
         + "&include=variants,images,custom_fields"
         + "&include_fields=id,name,sku,price,categories,brand_id,is_visible,"
-        "date_created,date_modified,description"
+        "date_created,date_modified,description,inventory_level"
     )
     res = requests.get(url, headers=headers)
     return res
