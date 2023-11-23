@@ -26,6 +26,8 @@ def attach_web_data_to_products(df, pdf):
         "p_is_visible",
         "p_id",
         "v_id",
+        "p_qty",
+        "v_qty",
         "cf_ebay_category",
         "cf_ebay_price",
         "cf_amazon_status",
@@ -53,4 +55,6 @@ if __name__ == "__main__":
     option_df = pd.read_pickle(f"{DATA_DIR}/option_df.pkl")
     products = pd.read_pickle(f"{DATA_DIR}/products.pkl")
 
-    attach_web_data_to_products(option_df, products)
+    df = attach_web_data_to_products(option_df, products)
+    print(df)
+    gb = df.groupby("webName")

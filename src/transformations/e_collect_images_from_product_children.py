@@ -19,6 +19,7 @@ def _restructure_product_group_media(group):
             "p_description",
             "p_is_visible",
             "p_id",
+            "p_qty",
             "description",
         ] + [f"image_{i}" for i in range(5)]:
             if rest_of_group[product_column].count():

@@ -14,12 +14,30 @@ def build_update_payloads(df):
 
     gb = df.groupby("webName")
 
+    def sieve(g):
+        """Returns True if any product in g has a different qty in RP vs BC"""
+        # chapstick products
+        if len(g) == 1:
+            g_should_update = (g.qty != g.v_qty).any()
+            return g_should_update
+        # t-shirt type products
+        else:
+            g_should_update = (
+                g.loc[g.index[1] :, "qty"] != g.loc[g.index[1] :, "v_qty"]
+            ).any()
+            return g_should_update
+
     changed_products_gb = gb.filter(
         lambda g: (
-            g.lModified.max()
-            > (dt.datetime.now() - dt.timedelta(seconds=seconds_backward))
+            sieve(g)
+            | (
+                (
+                    g.lModified.max()
+                    > (dt.datetime.now() - dt.timedelta(seconds=seconds_backward))
+                )
+                & (g.p_id.count() == 1)
+            )
         )
-        & (g.p_id.count() == 1)
     ).groupby("webName", sort=False)
 
     product_payloads_for_update = {"single_products": [], "product_groups": []}
