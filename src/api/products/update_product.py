@@ -17,7 +17,10 @@ def update_product(id_, data):
         responses.append(res)
         for variant_data in variants:
             variant_id = variant_data.pop("id")
-            variant_url = base + f"v3/catalog/products/{id_}/variants/{variant_id}?include_fields=id"
+            variant_url = (
+                base
+                + f"v3/catalog/products/{id_}/variants/{variant_id}?include_fields=id"
+            )
             res = requests.put(variant_url, headers=h, json=variant_data)
             responses.append(res)
     return responses
