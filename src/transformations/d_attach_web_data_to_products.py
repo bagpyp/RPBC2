@@ -48,7 +48,7 @@ def attach_web_data_to_products(df, pdf):
 
     # merge conflicts
     degenerate_df = df.groupby("webName").filter(lambda g: len(g) > g.v_sku.count() + 1)
-    bad_ids = degenerate_df[degenerate_df.p_id.notna()].p_id.unique().tolist()
+    bad_ids += degenerate_df[degenerate_df.p_id.notna()].p_id.unique().tolist()
 
     if apply_changes:
         for p_id in bad_ids:
