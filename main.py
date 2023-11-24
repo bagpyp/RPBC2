@@ -8,7 +8,7 @@ import datetime as dt
 
 import pandas as pd
 
-from config import apply_changes, sync_sideline_swap
+from config import apply_changes, sync_sideline_swap, max_run_lines
 from scripts.quivers import send_to_quivers
 from src.download.orders import get_all_orders, get_all_returns
 from src.download.products import (
@@ -94,6 +94,12 @@ def main():
     end_time = dt.datetime.now()
     print(f"Finished at {end_time}, duration process was {end_time - start_time}")
 
+    with open(f"{LOGS_DIR}/runs.csv") as run_file:
+        lines = run_file.readlines()
+    if len(lines) > max_run_lines + 1:
+        trimmed_lines = [lines[0]] + lines[-(max_run_lines + 1) :]
+        with open(f"{LOGS_DIR}/runs.csv", "w") as run_file:
+            run_file.writelines(trimmed_lines)
     with open(f"{LOGS_DIR}/runs.csv", "a") as run_file:
         run_file.write(
             f"{start_time},{end_time},{end_time - start_time},{num_updated},{num_created}\n"
