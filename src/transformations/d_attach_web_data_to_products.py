@@ -35,7 +35,16 @@ def attach_web_data_to_products(df, pdf):
 
     pdf = pdf[pdf.v_sku.replace("", nan).notna()][web_cols]
 
-    df = pd.merge(df, pdf, how="left", left_on="sku", right_on="v_sku").replace("", nan)
+    df = pd.merge(df, pdf, how="outer", left_on="sku", right_on="v_sku").replace(
+        "", nan
+    )
+
+    # all these need to be deleted
+    dangling_variants = df[df.sku.isna()]
+    bad_ids = dangling_variants[dangling_variants.p_id.notna()].p_id.unique().tolist()
+
+    # after this line, it's as if we had done a left join
+    df = df[df.sku.notna()]
 
     # merge conflicts
     degenerate_df = df.groupby("webName").filter(lambda g: len(g) > g.v_sku.count() + 1)
@@ -55,6 +64,4 @@ if __name__ == "__main__":
     option_df = pd.read_pickle(f"{DATA_DIR}/option_df.pkl")
     products = pd.read_pickle(f"{DATA_DIR}/products.pkl")
 
-    df = attach_web_data_to_products(option_df, products)
-    print(df)
-    gb = df.groupby("webName")
+    attach_web_data_to_products(option_df, products)
