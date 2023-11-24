@@ -1,6 +1,7 @@
 from tqdm import tqdm
 
-from src.api.products import update_product
+from config import apply_changes
+from src.api.products import update_product, delete_product
 from src.upload.update.update_custom_fields import update_custom_fields
 from src.util import LOGS_DIR
 
@@ -22,6 +23,9 @@ def update_products(payloads):
                     print(f"{alert_code} for product with id:", uid)
                     print("payload:", u)
                     failed_to_update.append(res)
+            if apply_changes and any([ac == 404 for ac in status_codes]):
+                # delete any product who is missing a variant
+                delete_product(uid)
 
     if failed_to_update:
         with open(f"{LOGS_DIR}/failed_to_update.log", "w") as ftu_log_file:
