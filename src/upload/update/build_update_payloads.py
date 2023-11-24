@@ -2,6 +2,7 @@ import datetime as dt
 
 import pandas as pd
 
+from config import overlap_seconds
 from src.util import LOGS_DIR, DATA_DIR
 
 
@@ -10,7 +11,7 @@ def build_update_payloads(df):
     now = dt.datetime.now()
     last_start = runs.start.max()
     time_delta = now - pd.to_datetime(last_start)
-    seconds_backward = time_delta.seconds + (60 * 10)
+    seconds_backward = time_delta.seconds + overlap_seconds  # ten minutes worth usually
 
     gb = df.groupby("webName")
 
@@ -29,14 +30,14 @@ def build_update_payloads(df):
 
     changed_products_gb = gb.filter(
         lambda g: (
-            sieve(g)
-            | (
+            (
                 (
                     g.lModified.max()
                     > (dt.datetime.now() - dt.timedelta(seconds=seconds_backward))
                 )
                 & (g.p_id.count() == 1)
             )
+            | sieve(g)
         )
     ).groupby("webName", sort=False)
 
