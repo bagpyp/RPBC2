@@ -47,5 +47,5 @@ def collect_images_from_product_children(df):
 
 
 if __name__ == "__main__":
-    merged_df = pd.read_pickle(f"{DATA_DIR}/merged_df.pkl")
-    collect_images_from_product_children(merged_df)
+    pruned_df = pd.read_pickle(f"{DATA_DIR}/pruned_df.pkl")
+    collect_images_from_product_children(pruned_df)

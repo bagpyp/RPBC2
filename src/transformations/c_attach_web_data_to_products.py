@@ -1,8 +1,6 @@
 import pandas as pd
 from numpy import nan
 
-from config import apply_changes
-from src.api.products import delete_product
 from src.util import DATA_DIR
 
 
@@ -38,23 +36,6 @@ def attach_web_data_to_products(df, pdf):
     df = pd.merge(df, pdf, how="outer", left_on="sku", right_on="v_sku").replace(
         "", nan
     )
-
-    # all these need to be deleted
-    dangling_variants = df[df.sku.isna()]
-    bad_ids = dangling_variants[dangling_variants.p_id.notna()].p_id.unique().tolist()
-
-    # after this line, it's as if we had done a left join
-    df = df[df.sku.notna()]
-
-    # merge conflicts
-    degenerate_df = df.groupby("webName").filter(lambda g: len(g) > g.v_sku.count() + 1)
-    bad_ids += degenerate_df[degenerate_df.p_id.notna()].p_id.unique().tolist()
-
-    if apply_changes:
-        for p_id in bad_ids:
-            delete_product(p_id)
-
-    df.loc[df.p_id.isin(bad_ids), web_cols] = nan
 
     df.to_pickle(f"{DATA_DIR}/merged_df.pkl")
     return df

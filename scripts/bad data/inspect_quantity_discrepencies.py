@@ -17,8 +17,9 @@ def inspect():
         r.sku.str[0].isin(["1", "2"]), "v_qty"
     ]
     r.drop("v_qty", axis=1, inplace=True)
-    r.p_qty = r.p_qty.astype(int)
-    df = r[r.webName.isin(r[r.qty != r.p_qty].webName)]
+    r['p_qty'] = r['p_qty'].astype(int)
+    mismatch = r[r.qty != r.p_qty]
+    df = r[r.webName.isin(mismatch.webName)]
 
     products = pd.read_pickle(f"{DATA_DIR}/products.pkl")
     p_cols = ["p_id", "v_id", "p_name", "p_sku", "v_sku", "p_qty", "v_qty"]
