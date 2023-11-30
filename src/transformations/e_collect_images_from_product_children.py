@@ -1,6 +1,11 @@
 import pandas as pd
 from numpy import nan
 
+from config import apply_changes
+from src.product_images import (
+    persist_web_media,
+    build_image_locations_from_file_structure,
+)
 from src.util import DATA_DIR
 
 
@@ -42,6 +47,15 @@ def collect_images_from_product_children(df):
     mdf = mdf.reset_index(drop=True)
     mdf.description = mdf.description.fillna(mdf.p_description)
     mdf = mdf[~mdf.sku.duplicated(keep=False)]
+
+    if apply_changes:
+        persist_web_media(df)
+        file_structure_df = build_image_locations_from_file_structure()
+    else:
+        file_structure_df = pd.read_pickle(f"{DATA_DIR}/file_df.pkl")
+
+    mdf = mdf.set_index("sku").join(file_structure_df)
+
     mdf.to_pickle(f"{DATA_DIR}/mediated_df.pkl")
     return mdf
 

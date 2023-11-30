@@ -16,10 +16,6 @@ from src.download.products import (
     download_brand_ids,
     download_category_ids,
 )
-from src.product_images import (
-    build_image_locations_from_file_structure,
-    persist_web_media,
-)
 from src.server import (
     read_ecm_data_into_dataframe,
     write_orders_to_ecm,
@@ -68,14 +64,6 @@ def main():
     df = attach_web_data_to_products(df, pdf)
     df = delete_conflict_products(df)
     df = collect_images_from_product_children(df)
-
-    if apply_changes:
-        persist_web_media(df)
-        file_structure_df = build_image_locations_from_file_structure()
-    else:
-        file_structure_df = pd.read_pickle(f"{DATA_DIR}/file_df.pkl")
-
-    df = df.set_index("sku").join(file_structure_df)
     df = prepare_df_for_upload(df)
 
     product_payloads_for_update = build_update_payloads(df)
