@@ -11,6 +11,9 @@ def persist_web_media(df):
     # base images
     bases = [
         b.split("\\")[-1].split(".")[0] for b in glob(f"{IMAGES_DIR}\\base\\*.jpeg")
+    ] + [
+        b.split("\\")[-1].split(".")[0]
+        for b in glob(f"{IMAGES_DIR}\\downloaded\\base\\*.jpeg")
     ]
     # contains 0-s and 2-s
     """
@@ -44,6 +47,9 @@ def persist_web_media(df):
     # variant images
     variants = [
         b.split("\\")[-1].split(".")[0] for b in glob(f"{IMAGES_DIR}\\variant\\*.jpeg")
+    ] + [
+        b.split("\\")[-1].split(".")[0]
+        for b in glob(f"{IMAGES_DIR}\\downloaded\\variant\\*.jpeg")
     ]
     variant = (
         df[df.sku.str[:2] == "1-"][["sku", "v_image_url"]]
