@@ -9,6 +9,7 @@ amazon_excluded_vendors = [
     "Crab Grab",
     "Creature",
     "Darn Tough",
+    "Fox",
     "Giro",
     "Gnu",
     "Havaianas",

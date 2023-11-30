@@ -1,3 +1,4 @@
+import datetime as dt
 import json
 import os
 import re
@@ -119,6 +120,7 @@ def create_products(payloads):
 
     if failed_to_create:
         with open(f"{LOGS_DIR}/failed_to_create.log", "w") as ftc_log_file:
+            ftc_log_file.write(str(dt.datetime.now()) + "\n\n")
             for creation_failure_response in failed_to_create:
                 original_payload = json.loads(creation_failure_response.request.body)
                 response = creation_failure_response.json()

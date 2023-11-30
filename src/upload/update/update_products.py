@@ -1,3 +1,5 @@
+import datetime as dt
+
 from tqdm import tqdm
 
 from config import apply_changes
@@ -29,6 +31,7 @@ def update_products(payloads):
 
     if failed_to_update:
         with open(f"{LOGS_DIR}/failed_to_update.log", "w") as ftu_log_file:
+            ftu_log_file.write(str(dt.datetime.now()) + "\n\n")
             for update_failure_response_group in failed_to_update:
                 for update_failure_response in update_failure_response_group:
                     ftu_log_file.write(update_failure_response.text + "\n")

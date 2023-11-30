@@ -19,11 +19,15 @@ def delete_conflict_products(df):
     bad_ids += full_carryovers[full_carryovers.p_id.notna()].p_id.unique().tolist()
 
     # merge conflicts
-    misshaped_groups = df.groupby("webName").filter(lambda g: len(g) > g.v_sku.count() + 1)
+    misshaped_groups = df.groupby("webName").filter(
+        lambda g: len(g) > g.v_sku.count() + 1
+    )
     bad_ids += misshaped_groups[misshaped_groups.p_id.notna()].p_id.unique().tolist()
 
-    partial_carryovers = df.groupby('p_name').filter(lambda g: g.webName.nunique() > 1)
-    bad_ids += partial_carryovers[partial_carryovers.p_id.notna()].p_id.unique().tolist()
+    partial_carryovers = df.groupby("p_name").filter(lambda g: g.webName.nunique() > 1)
+    bad_ids += (
+        partial_carryovers[partial_carryovers.p_id.notna()].p_id.unique().tolist()
+    )
 
     if apply_changes:
         for p_id in list(set(bad_ids)):
@@ -31,25 +35,26 @@ def delete_conflict_products(df):
 
     # TODO: store column lists as constants
     web_cols = [
-                   "p_name",
-                   "p_sku",
-                   "v_sku",
-                   "p_categories",
-                   "p_description",
-                   "v_image_url",
-                   "p_is_visible",
-                   "p_id",
-                   "v_id",
-                   "p_qty",
-                   "v_qty",
-                   "cf_ebay_category",
-                   "cf_ebay_price",
-                   "cf_amazon_status",
-               ] + [f"image_{i}" for i in range(5)]
+        "p_name",
+        "p_sku",
+        "v_sku",
+        "p_categories",
+        "p_description",
+        "v_image_url",
+        "p_is_visible",
+        "p_id",
+        "v_id",
+        "p_qty",
+        "v_qty",
+        "cf_ebay_category",
+        "cf_ebay_price",
+        "cf_amazon_status",
+    ] + [f"image_{i}" for i in range(5)]
 
     df.loc[df.p_id.isin(bad_ids), web_cols] = nan
 
     df.to_pickle(f"{DATA_DIR}/pruned_df.pkl")
+    return df
 
 
 if __name__ == "__main__":
