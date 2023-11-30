@@ -24,8 +24,8 @@ pdf = pd.read_pickle(f"{DATA_DIR}/products.pkl")
 cols = ["p_brand_id", "p_id"]
 pdf = pdf[cols].copy()
 pdf.loc[:, "p_brand_id"] = pdf["p_brand_id"].astype(int)
-# to update one brand at a time (this one is Giro):
-# pdf = pdf[pdf.p_brand_id == 5758]
+# to update one brand at a time (this one is Fox):
+# pdf = pdf[pdf.p_brand_id == 5674]
 pdf["amazon_status"] = where(
     pdf.p_brand_id.isin(amazon_excluded_brand_ids), "Disabled", "Enabled"
 )
