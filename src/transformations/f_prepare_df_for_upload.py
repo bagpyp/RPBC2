@@ -111,7 +111,7 @@ def prepare_df_for_upload(df):
         .tolist()
     )
 
-    df["listOnEbay"] = df[df.webName.isin(ebay_names)]
+    df["listOnEbay"] = df.webName.isin(ebay_names)
 
     df.to_pickle(f"{DATA_DIR}/ready.pkl")
 

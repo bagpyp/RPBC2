@@ -57,6 +57,7 @@ def _product_update_payload(g):
             "cf_ebay_category": r["cf_ebay_category"],
             "cf_ebay_price": r["cf_ebay_price"],
             "cf_amazon_status": r["cf_amazon_status"],
+            "cf_ebay_status": r["cf_ebay_status"],
         }
     )
     if r["clearance_cat"] != "":
@@ -74,6 +75,7 @@ def _product_update_payload(g):
                 product["cf_ebay_category"] = h["cf_ebay_category"]
                 product["cf_ebay_price"] = float(h["cf_ebay_price"])
                 product["cf_amazon_status"] = h["cf_amazon_status"]
+                product["cf_ebay_status"] = h["cf_ebay_status"]
             variant = {}
             variant.update(
                 {
