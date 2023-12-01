@@ -51,6 +51,7 @@ def _product_update_payload(g):
             "sale_price": r["pSale"],
             "price": r["pMAP"],
             "list_on_amazon": r["listOnAmazon"],
+            "list_on_ebay": r["listOnEbay"],
             "amazon_price": r["pAmazon"],
             "retail_price": r["pMSRP"],
             "cf_ebay_category": r["cf_ebay_category"],

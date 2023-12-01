@@ -3,7 +3,7 @@ from time import gmtime
 
 from numpy import nan, where
 
-from config import apply_changes
+from config import apply_changes, ebay_qty_threshold_minimum
 from src.api.brands import create_brand
 from src.constants import (
     amazon_excluded_vendors,
@@ -101,8 +101,25 @@ def prepare_df_for_upload(df):
 
     df.pAmazon = df.pAmazon.round(2)
 
+    # Status Columns
     df["listOnAmazon"] = ~df.BRAND.isin(amazon_excluded_vendors)
+
+    ebay_names = (
+        df.groupby("webName")
+        .filter(lambda g: g.at[g.index[0], "qty"] > ebay_qty_threshold_minimum)
+        .webName.unique()
+        .tolist()
+    )
+
+    df["listOnEbay"] = df[df.webName.isin(ebay_names)]
 
     df.to_pickle(f"{DATA_DIR}/ready.pkl")
 
     return df
+
+
+if __name__ == "__main__":
+    import pandas as pd
+
+    mediated_df = pd.read_pickle(f"{DATA_DIR}/mediated_df.pkl")
+    prepare_df_for_upload(mediated_df)

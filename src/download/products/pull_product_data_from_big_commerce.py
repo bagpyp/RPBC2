@@ -39,6 +39,8 @@ def pull_product_data_from_big_commerce():
                 product_record_info["cf_ebay_price"] = cf["value"]
             elif cf["name"] == "Amazon Status":
                 product_record_info["cf_amazon_status"] = cf["value"] == "Enabled"
+            elif cf["name"] == "eBay Status":
+                product_record_info["cf_ebay_status"] = cf["value"] == "Enabled"
         # variants
         if product["variants"]:
             for variant in product["variants"]:
@@ -62,6 +64,7 @@ def pull_product_data_from_big_commerce():
     pdf.loc[:, "p_id"] = pdf.p_id.astype(int).astype(str)
     pdf.loc[:, "v_id"] = pdf.v_id.astype(int).astype(str)
     pdf.to_pickle(f"{DATA_DIR}/products.pkl")
+    # TODO: fuck this idea, returning something different from what you pickle!
     return pdf.reset_index()
 
 

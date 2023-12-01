@@ -49,6 +49,7 @@ def delete_conflict_products(df):
         "cf_ebay_category",
         "cf_ebay_price",
         "cf_amazon_status",
+        "cf_ebay_status",
     ] + [f"image_{i}" for i in range(5)]
 
     df.loc[df.p_id.isin(bad_ids), web_cols] = nan

@@ -17,6 +17,9 @@ def _restructure_product_group_media(group):
         rest_of_group = group.iloc[1:, :].copy()
         rest_of_group.loc[:, image_cols] = nan
         # lift all other product representative data to first row
+        # TODO: also lift custom_fields (cf_*) to front row
+        #  instead of getting it from rest-of-group later in payloads files.
+        #  for both update and create...
         for product_column in [
             "p_name",
             "p_sku",

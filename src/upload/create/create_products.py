@@ -38,6 +38,11 @@ def create_products(payloads):
             update_custom_field(
                 p_id, "Amazon Status", "Enabled" if list_on_amazon else "Disabled"
             )
+            # eBay Status
+            list_on_ebay = c["list_on_ebay"]
+            update_custom_field(
+                p_id, "eBay Status", "Enabled" if list_on_ebay else "Disabled"
+            )
             # eBay Category
             bc_category = str(json_response_payload["categories"][0])
             update_custom_field(
