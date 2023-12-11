@@ -13,13 +13,6 @@ def pickles():
     products = pd.read_pickle(f"{DATA_DIR}/products.pkl")
     ready = pd.read_pickle(f"{DATA_DIR}/ready.pkl")
 
-    cols = ["webName", "sku", "qty", "p_qty", "v_qty"]
-    r = ready[cols]
-    r = r.groupby("webName").filter(lambda g: g.p_qty.sum() != 0)
-    r.loc[r.sku.str[0].isin(["1", "2"]), "p_qty"] = r.loc[
-        r.sku.str[0].isin(["1", "2"]), "v_qty"
-    ]
-    r.drop("v_qty", axis=1, inplace=True)
     print("have some pickles!")
 
 
