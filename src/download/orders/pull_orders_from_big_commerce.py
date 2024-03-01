@@ -62,9 +62,7 @@ def _build_order_from_response(new_order):
         order["channel"] = "EBAY"
         order["payment_zone"] = "Ebay"
     elif "amazon" in external_source:
-        order["payment_id"] = (
-            new_order.get("staff_notes", "_\tno_id\n").split("\t")[1].split("\n")[0]
-        )
+        order["payment_id"] = new_order.get("external_id", "call robbie")
         order["channel"] = "AMAZON"
         order["payment_zone"] = "Amazon"
     else:
