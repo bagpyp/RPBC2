@@ -26,7 +26,11 @@ def update_custom_fields(update_id, update_payload):
             # we have to remove the listing from ebay as well
             update_custom_field(update_id, "eBay Status", "Disabled")
     if update_payload["list_on_walmart"] != update_payload.get("cf_walmart_status", ""):
-        update_custom_field(update_id, "WalMart Status", "Enabled" if update_payload["list_on_walmart"] else "Disabled")
+        update_custom_field(
+            update_id,
+            "WalMart Status",
+            "-1" if update_payload["list_on_walmart"] else "0",
+        )
     if update_payload["list_on_ebay"] != update_payload["cf_ebay_status"]:
         # should list on ebay based on rp quantity and brand not being in the excl list
         if update_payload["list_on_ebay"]:
