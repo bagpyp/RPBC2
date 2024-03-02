@@ -29,6 +29,7 @@ def _product_creation_payload(g):
             "price": r["pMAP"],
             "list_on_amazon": r["listOnAmazon"],
             "list_on_ebay": r["listOnEbay"],
+            "list_on_walmart": r["listOnWalmart"],
             "amazon_price": r["pAmazon"],
             "retail_price": r["pMSRP"],
             "sku": r["sku"],

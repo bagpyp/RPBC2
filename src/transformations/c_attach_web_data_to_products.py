@@ -30,6 +30,7 @@ def attach_web_data_to_products(df, pdf):
         "cf_ebay_price",
         "cf_amazon_status",
         "cf_ebay_status",
+        "cf_walmart_status",
     ] + [f"image_{i}" for i in range(5)]
 
     pdf = pdf[pdf.v_sku.replace("", nan).notna()][web_cols]

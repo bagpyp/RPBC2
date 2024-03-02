@@ -25,12 +25,15 @@ def update_custom_fields(update_id, update_payload):
             update_custom_field(update_id, "Amazon Status", "Disabled")
             # we have to remove the listing from ebay as well
             update_custom_field(update_id, "eBay Status", "Disabled")
+    if update_payload["list_on_walmart"] != update_payload.get("cf_walmart_status", ""):
+        update_custom_field(update_id, "WalMart Status", "Enabled" if update_payload["list_on_walmart"] else "Disabled")
     if update_payload["list_on_ebay"] != update_payload["cf_ebay_status"]:
         # should list on ebay based on rp quantity and brand not being in the excl list
         if update_payload["list_on_ebay"]:
             # this only happens if qty gets big enough in rp to list the item on ebay!
             update_custom_field(update_id, "eBay Status", "Enabled")
         else:
-            # in this case, the qty may be less, but we don't want to remove
-            # a listing that has already been put up!
+            # TODO: think about this:
+            #  in this case, the qty may be less, but we don't want to remove
+            #  a listing that has already been put up!
             pass

@@ -41,6 +41,8 @@ def pull_product_data_from_big_commerce():
                 product_record_info["cf_amazon_status"] = cf["value"] == "Enabled"
             elif cf["name"] == "eBay Status":
                 product_record_info["cf_ebay_status"] = cf["value"] == "Enabled"
+            elif cf["name"] == "WalMart Status":
+                product_record_info["cf_walmart_status"] = cf["value"] == "Enabled"
         # variants
         if product["variants"]:
             for variant in product["variants"]:

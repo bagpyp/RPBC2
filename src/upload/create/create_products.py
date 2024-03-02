@@ -43,6 +43,11 @@ def create_products(payloads):
             update_custom_field(
                 p_id, "eBay Status", "Enabled" if list_on_ebay else "Disabled"
             )
+            # WalMart Status
+            list_on_walmart = c["list_on_walmart"]
+            update_custom_field(
+                p_id, "WalMart Status", "Enabled" if list_on_walmart else "Disabled"
+            )
             # eBay Category
             bc_category = str(json_response_payload["categories"][0])
             update_custom_field(

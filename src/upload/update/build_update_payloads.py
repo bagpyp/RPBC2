@@ -52,12 +52,14 @@ def _product_update_payload(g):
             "price": r["pMAP"],
             "list_on_amazon": r["listOnAmazon"],
             "list_on_ebay": r["listOnEbay"],
+            "list_on_walmart": r["listOnWalmart"],
             "amazon_price": r["pAmazon"],
             "retail_price": r["pMSRP"],
             "cf_ebay_category": r["cf_ebay_category"],
             "cf_ebay_price": r["cf_ebay_price"],
             "cf_amazon_status": r["cf_amazon_status"],
             "cf_ebay_status": r["cf_ebay_status"],
+            "cf_walmart_status": r["cf_walmart_status"],
         }
     )
     if r["clearance_cat"] != "":
@@ -76,6 +78,7 @@ def _product_update_payload(g):
                 product["cf_ebay_price"] = float(h["cf_ebay_price"])
                 product["cf_amazon_status"] = h["cf_amazon_status"]
                 product["cf_ebay_status"] = h["cf_ebay_status"]
+                product["cf_walmart_status"] = h["cf_walmart_status"]
             variant = {}
             variant.update(
                 {

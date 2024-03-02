@@ -7,7 +7,7 @@ from config import apply_changes, ebay_qty_threshold_minimum
 from src.api.brands import create_brand
 from src.constants import (
     amazon_excluded_vendors,
-    category_id_to_associated_clearance_category_id,
+    category_id_to_associated_clearance_category_id, walmart_excluded_vendors,
 )
 from src.util import DATA_DIR
 
@@ -112,6 +112,8 @@ def prepare_df_for_upload(df):
     )
 
     df["listOnEbay"] = df.webName.isin(ebay_names)
+
+    df["listOnWalmart"] = ~df.BRAND.isin(walmart_excluded_vendors)
 
     df.to_pickle(f"{DATA_DIR}/ready.pkl")
 
