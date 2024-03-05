@@ -39,7 +39,7 @@ if __name__ == "__main__":
     pdf = pd.read_pickle(f"{DATA_DIR}/products.pkl")
     pdf_changed = False
     for p_id, walmart_status in tqdm(custom_fields.items()):
-        res = update_custom_field(p_id, "WalMart Status", walmart_status)
+        res = update_custom_field(p_id, "Second WalMart Status", walmart_status)
         if not res.ok:
             if "A product was not found with an id of " in res.text:
                 print(f"Removing product with id {p_id} from `products.pkl`")
