@@ -36,7 +36,7 @@ def _product_creation_payload(g):
             "description": r["description"],
         }
     )
-    product.update({"is_visible": False})
+    # product.update({"is_visible": False})
     product_has_images = 0
     if r["image_0_file"] != "":
         product.update({"is_visible": True})

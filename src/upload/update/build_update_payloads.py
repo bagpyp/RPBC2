@@ -69,7 +69,8 @@ def _product_update_payload(g):
     if r["image_0"] != "":
         product.update({"is_visible": True})
     elif r["image_0"] == "":
-        product.update({"is_visible": False})
+        pass
+        # product.update({"is_visible": False})
     if len(g) > 1:
         variants = []
         for i, h in enumerate(g[1:]):

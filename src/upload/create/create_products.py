@@ -108,7 +108,7 @@ def create_products(payloads):
                     )
                 )
                 all_bad_image_skus.extend(bad_image_skus)
-                c["is_visible"] = False
+                # c["is_visible"] = False
                 recursive_create(c)
             else:
                 failed_to_create.append(res)
