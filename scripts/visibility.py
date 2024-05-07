@@ -1,16 +1,12 @@
 import pandas as pd
-from tqdm import tqdm
 
-from src.api.products import update_product
 from src.util import DATA_DIR
 
 
 def pickles():
     p = pd.read_pickle(f"{DATA_DIR}/products.pkl")
 
-    pids = p[~p.p_is_visible & p.p_qty > 0].p_id.unique()
-    for pid in tqdm(pids):
-        update_product(pid, {"is_visible": True})
+    len(p[p.image_0.notna() & p.v_image_url.notna()])
 
 
 if __name__ == "__main__":
