@@ -135,7 +135,7 @@ def create_products(payloads):
                 original_payload = json.loads(creation_failure_response.request.body)
                 response = creation_failure_response.json()
 
-                ftc_log_file.write(json.dumps(response["errors"]) + "\n")
+                ftc_log_file.write(json.dumps(response) + "\n")
                 ftc_log_file.write(
                     f"name: {original_payload['name']}, sku: {original_payload['sku']}\n\n"
                 )
