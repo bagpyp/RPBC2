@@ -16,6 +16,7 @@ def invc_items(order, ecm_data):
             "item_pos": str(i + 1),
             "item_sid": str(record["isid"]),
             "qty": str(product["qty"]),
+            # TODO: make this 85% of pAmazon for all non-BC orders
             "orig_price": str(record["pSale"]),
             "price": str(product["amt_per"]),
             "kit_flag": "0",
