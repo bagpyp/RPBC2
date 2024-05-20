@@ -84,7 +84,7 @@ def main():
 
     with open(f"{LOGS_DIR}/runs.csv") as run_file:
         lines = run_file.readlines()
-    if len(lines) > max_run_lines + 1:
+    if len(lines) > max_run_lines:
         trimmed_lines = [lines[0]] + lines[-(max_run_lines - 1) :]
         with open(f"{LOGS_DIR}/runs.csv", "w") as run_file:
             run_file.writelines(trimmed_lines)
