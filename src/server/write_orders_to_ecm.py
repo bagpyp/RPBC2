@@ -74,7 +74,7 @@ def write_orders_to_ecm(orders, regular=True):
 
     invoice_xmls = [invoice.to_xml() for invoice in invoices]
 
-    # log the written receipt
+    # log the written receipt TODO: put after writing to ecm, dumbass!
     with open(f"{INVOICES_DIR}/written.csv", "a") as logFile:
         logFile.writelines(
             [

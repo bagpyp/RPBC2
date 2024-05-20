@@ -24,6 +24,7 @@ def invc_items(order, ecm_data):
             "tax_amt": "0",
             "empl_name": order["channel"][:8],
             "empl_id": channel_name_to_employee_id[order["channel"]],
+            "cost": record["cost"],
         }
         invc_items.append(invc_item)
     return invc_items
